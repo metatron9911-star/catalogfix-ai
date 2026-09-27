@@ -114,6 +114,49 @@ except Exception as exc:
     print(f"B4 OWNERSHIP REGRESSION FAIL: {type(exc).__name__}: {exc}")
     sys.exit(1)
 
+# B4-v1 physical OCR collision detector freeze. Fixtures use the sampled
+# 2977x2105 page size to convert raw probe boxes into normalized page space.
+try:
+    def _b4_box(text, bbox, width=2977.0, height=2105.0):
+        x1, y1, x2, y2 = bbox
+        return {
+            "text": text,
+            "bbox": bbox,
+            "normalized_bbox": [
+                x1 / width, y1 / height, x2 / width, y2 / height
+            ],
+        }
+
+    # p.11 BRAVO60: same parsed code from two distinct physical OCR boxes.
+    bravo_collision = [
+        _b4_box("Bravo 60-4", [1626.5, 210.8, 1901.1, 260.1]),
+        _b4_box("Bravo 60-3", [136.5, 1148.2, 411.1, 1197.5]),
+    ]
+    assert catalogfix_core._visual_collision_codes(bravo_collision) == {
+        "BRAVO60": 2
+    }
+
+    # Same code, same physical box (retry/duplicate): one physical hit, not collision.
+    same_box_retry = [
+        _b4_box("Bio-01", [141.0, 210.8, 298.6, 261.6]),
+        _b4_box("Bio-01", [141.0, 210.8, 298.6, 261.6]),
+    ]
+    assert catalogfix_core._visual_collision_codes(same_box_retry) == {}
+
+    # p.9 note: multiple parsed codes from one physical box are B3-B, not a
+    # collision by themselves. Commit 5 intentionally adds no SKU blacklist.
+
+    # p.21 clean page: distinct codes from distinct boxes produce no collision.
+    clean_page = [
+        _b4_box("Bio-01", [141.0, 210.8, 298.6, 261.6]),
+        _b4_box("Bio-05", [1626.5, 210.8, 1823.1, 261.6]),
+        _b4_box("Bio-02", [141.0, 1146.7, 310.6, 1199.0]),
+    ]
+    assert catalogfix_core._visual_collision_codes(clean_page) == {}
+except Exception as exc:
+    print(f"B4 COLLISION REGRESSION FAIL: {type(exc).__name__}: {exc}")
+    sys.exit(1)
+
 # B4-v1 price-association eligibility regression. These fixtures are the exact
 # token classes validated by the targeted harness/probe; no production wiring
 # exists yet in this commit.

@@ -1757,6 +1757,7 @@ def _visual_has_price_gate(boxes):
 # --- B4 visual association geometry ---
 VISUAL_ASSOC_LANE_BOUNDARY_V1 = 0.50
 VISUAL_ASSOC_MAX_BLOCK_HEIGHT_V1 = 0.445
+VISUAL_ASSOC_BOX_CENTER_EPSILON_V1 = 0.002
 
 
 def _visual_lane(cx):
@@ -1784,6 +1785,48 @@ def _visual_owner(candidate_cy, skus_in_lane):
         if start <= candidate_cy < end:
             return sku["code"]
     return None
+
+
+def _visual_collision_codes(page_boxes):
+    """Return {parsed_code: physical_hit_count} for B4-v1 collisions.
+
+    Operates on the selected page pass only, matching the same physical OCR
+    box set used by production _visual_codes_from_text extraction. Each box
+    must carry a normalized page-space bbox in normalized_bbox. Repeated
+    observations whose normalized centers differ by at most
+    VISUAL_ASSOC_BOX_CENTER_EPSILON_V1 on both axes count as one physical hit.
+
+    This detector does not judge SKU plausibility or repair B3-B false codes;
+    it only reports parsed codes seen in >=2 distinct physical boxes.
+    """
+    physical_centers = {}
+
+    for box in page_boxes or []:
+        normalized_bbox = box.get("normalized_bbox")
+        if not normalized_bbox or len(normalized_bbox) != 4:
+            continue
+        try:
+            x1, y1, x2, y2 = (float(v) for v in normalized_bbox)
+        except (TypeError, ValueError):
+            continue
+        cx = (x1 + x2) / 2.0
+        cy = (y1 + y2) / 2.0
+
+        for code in _visual_codes_from_text(box.get("text", "")):
+            centers = physical_centers.setdefault(code, [])
+            same_physical = any(
+                abs(cx - prev_cx) <= VISUAL_ASSOC_BOX_CENTER_EPSILON_V1
+                and abs(cy - prev_cy) <= VISUAL_ASSOC_BOX_CENTER_EPSILON_V1
+                for prev_cx, prev_cy in centers
+            )
+            if not same_physical:
+                centers.append((cx, cy))
+
+    return {
+        code: len(centers)
+        for code, centers in physical_centers.items()
+        if len(centers) >= 2
+    }
 
 
 # B4-v1 empirical association eligibility. Intentionally narrow and derived
