@@ -1986,6 +1986,7 @@ def _debug_visual_last_sku_probe(page_num, boxes, image_shape):
                 "lane": lane,
                 "last_sku_code": last["code"],
                 "last_sku_cy": round(last_cy, 6),
+                "status": "BOX_BELOW_LAST_SKU",
                 "raw_text": raw_text,
                 "cy": round(norm_cy, 6),
                 "delta_y_from_last_sku": round(norm_cy - last_cy, 6),
