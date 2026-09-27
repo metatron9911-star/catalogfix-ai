@@ -39,9 +39,33 @@ def _parse_debug_visual_trace_pages():
 
 _DEBUG_VISUAL_TRACE_PAGES = _parse_debug_visual_trace_pages()
 
+_DEBUG_VISUAL_LAST_SKU_PROBE = os.getenv("DEBUG_VISUAL_LAST_SKU_PROBE", "").strip() == "1"
+
+
+def _parse_debug_visual_last_sku_probe_pages():
+    raw = os.getenv("DEBUG_VISUAL_LAST_SKU_PROBE_PAGES", "").strip()
+    if not raw:
+        return {11, 21}
+    pages = set()
+    for part in raw.split(","):
+        part = part.strip()
+        if part.isdigit() and int(part) > 0:
+            pages.add(int(part))
+    return pages
+
+
+_DEBUG_VISUAL_LAST_SKU_PROBE_PAGES = _parse_debug_visual_last_sku_probe_pages()
+
 
 def _debug_visual_enabled(page_num):
     return _DEBUG_VISUAL_TRACE and page_num in _DEBUG_VISUAL_TRACE_PAGES
+
+
+def _debug_visual_last_sku_probe_enabled(page_num):
+    return (
+        _DEBUG_VISUAL_LAST_SKU_PROBE
+        and page_num in _DEBUG_VISUAL_LAST_SKU_PROBE_PAGES
+    )
 
 
 def _debug_bbox_payload(bbox, image_shape):
@@ -1847,6 +1871,129 @@ def _debug_visual_pass_snapshot(page_num, dpi, shape, boxes, engine):
     }
 
 
+# B4-v1 empirical association eligibility. This is intentionally narrow and
+# derived only from the observed AppliancesPriceList harness format. It is not
+# a universal price parser. The targeted last-SKU probe below is observation-
+# only; production association does not call this helper yet.
+_B4_V1_PRICE_ACCEPT_RE = re.compile(
+    r"^\\s*\\d{1,3}(?:,\\d{3})*(?:\\.\\d{1,2})?\\s*/-\\s*$"
+)
+_B4_V1_DIMENSION_RE = re.compile(r"\\d+\\s*[xX×]\\s*\\d+")
+_B4_V1_DIMENSION_UNIT_RE = re.compile(r"\\d(?:[\\d.,]*\\s*)?(?:mm|cm)\\b", re.I)
+_B4_V1_MALFORMED_APOSTROPHE_RE = re.compile(r"\\d\\s*['’]\\s*\\d")
+
+
+def _visual_association_price_classification_v1(raw_text):
+    """Classify one OCR token for B4-v1 association eligibility.
+
+    Reject rules win before accept. Acceptance is a full-string match of the
+    observed western-grouped INR-style '/-' form. Indian lakh grouping is a
+    known v1 exclusion and therefore falls into OTHER_REJECT.
+    """
+    text = clean_text(raw_text)
+    if _B4_V1_DIMENSION_RE.search(text) or _B4_V1_DIMENSION_UNIT_RE.search(text):
+        return "DIMENSION_REJECT"
+    if "-/" in text or _B4_V1_MALFORMED_APOSTROPHE_RE.search(text):
+        return "MALFORMED_REJECT"
+    if _B4_V1_PRICE_ACCEPT_RE.fullmatch(text):
+        return "ELIGIBLE"
+    return "OTHER_REJECT"
+
+
+def _debug_visual_last_sku_probe(page_num, boxes, image_shape):
+    """Observation-only targeted probe for last-SKU ownership depth.
+
+    Emits one lane-summary row for LEFT and RIGHT even when a lane has no SKU,
+    then one row per non-empty OCR text box below that lane's physical last SKU.
+    No association, filtering, emission, or dataset mutation is performed.
+    """
+    if not _debug_visual_last_sku_probe_enabled(page_num):
+        return
+    h, w = image_shape[:2]
+    if not h or not w:
+        for lane in ("LEFT", "RIGHT"):
+            print(json.dumps({
+                "run_id": _DEBUG_VISUAL_TRACE_RUN_ID,
+                "debug_visual_last_sku_probe": True,
+                "stage": "last-sku-probe-lane",
+                "page": page_num,
+                "lane": lane,
+                "last_sku_code": None,
+                "last_sku_cy": None,
+                "status": "NO_PAGE_GEOMETRY",
+            }, ensure_ascii=False))
+        return
+
+    physical_skus = {"LEFT": [], "RIGHT": []}
+    for b in boxes:
+        raw_text = clean_text(b.get("text", ""))
+        codes = _visual_codes_from_text(raw_text)
+        if not codes:
+            continue
+        cx, cy = _bbox_center(b["bbox"])
+        lane = "LEFT" if (cx / w) < 0.50 else "RIGHT"
+        for code in codes:
+            physical_skus[lane].append({
+                "code": code,
+                "cy": cy / h,
+                "cx": cx / w,
+                "box": b,
+            })
+
+    for lane in ("LEFT", "RIGHT"):
+        lane_skus = physical_skus[lane]
+        if not lane_skus:
+            print(json.dumps({
+                "run_id": _DEBUG_VISUAL_TRACE_RUN_ID,
+                "debug_visual_last_sku_probe": True,
+                "stage": "last-sku-probe-lane",
+                "page": page_num,
+                "lane": lane,
+                "last_sku_code": None,
+                "last_sku_cy": None,
+                "status": "NO_SKU_IN_LANE",
+            }, ensure_ascii=False))
+            continue
+
+        last = max(lane_skus, key=lambda x: (x["cy"], x["cx"], x["code"]))
+        last_cy = float(last["cy"])
+        print(json.dumps({
+            "run_id": _DEBUG_VISUAL_TRACE_RUN_ID,
+            "debug_visual_last_sku_probe": True,
+            "stage": "last-sku-probe-lane",
+            "page": page_num,
+            "lane": lane,
+            "last_sku_code": last["code"],
+            "last_sku_cy": round(last_cy, 6),
+            "status": "OK",
+        }, ensure_ascii=False))
+
+        for b in boxes:
+            raw_text = clean_text(b.get("text", ""))
+            if not raw_text:
+                continue
+            cx, cy = _bbox_center(b["bbox"])
+            box_lane = "LEFT" if (cx / w) < 0.50 else "RIGHT"
+            norm_cy = cy / h
+            if box_lane != lane or norm_cy <= last_cy:
+                continue
+            payload = _debug_bbox_payload(b["bbox"], image_shape)
+            print(json.dumps({
+                "run_id": _DEBUG_VISUAL_TRACE_RUN_ID,
+                "debug_visual_last_sku_probe": True,
+                "stage": "last-sku-probe-box",
+                "page": page_num,
+                "lane": lane,
+                "last_sku_code": last["code"],
+                "last_sku_cy": round(last_cy, 6),
+                "raw_text": raw_text,
+                "cy": round(norm_cy, 6),
+                "delta_y_from_last_sku": round(norm_cy - last_cy, 6),
+                "classification": _visual_association_price_classification_v1(raw_text),
+                **payload,
+            }, ensure_ascii=False))
+
+
 def _visual_named_price_fallback(page_num, boxes, image_shape, existing_records, filename="", page_heading=""):
     """Review-only recovery for image-only catalogues with product name + visible price."""
     if not boxes:
@@ -2004,6 +2151,9 @@ def extract_visual_catalog_products(doc, page_num, filename="", dpi=150):
             "selected_dpi":best[0],
             "selected_from_logged_pass":id(page_boxes) in debug_pass_cache,
         },ensure_ascii=False))
+
+    # Targeted B4 geometry probe: observation only, no production behavior change.
+    _debug_visual_last_sku_probe(page_num, page_boxes, page_shape)
 
     brand=""
     stem=Path(filename or "").stem
