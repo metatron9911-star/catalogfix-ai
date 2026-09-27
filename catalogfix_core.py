@@ -1876,11 +1876,11 @@ def _debug_visual_pass_snapshot(page_num, dpi, shape, boxes, engine):
 # a universal price parser. The targeted last-SKU probe below is observation-
 # only; production association does not call this helper yet.
 _B4_V1_PRICE_ACCEPT_RE = re.compile(
-    r"^\\s*\\d{1,3}(?:,\\d{3})*(?:\\.\\d{1,2})?\\s*/-\\s*$"
+    r"^\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\s*/-\s*$"
 )
-_B4_V1_DIMENSION_RE = re.compile(r"\\d+\\s*[xX×]\\s*\\d+")
-_B4_V1_DIMENSION_UNIT_RE = re.compile(r"\\d(?:[\\d.,]*\\s*)?(?:mm|cm)\\b", re.I)
-_B4_V1_MALFORMED_APOSTROPHE_RE = re.compile(r"\\d\\s*['’]\\s*\\d")
+_B4_V1_DIMENSION_RE = re.compile(r"\d+\s*[xX×]\s*\d+")
+_B4_V1_DIMENSION_UNIT_RE = re.compile(r"\d(?:[\d.,]*\s*)?(?:mm|cm)\b", re.I)
+_B4_V1_MALFORMED_APOSTROPHE_RE = re.compile(r"\d\s*['’]\s*\d")
 
 
 def _visual_association_price_classification_v1(raw_text):
