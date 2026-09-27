@@ -1754,6 +1754,34 @@ def _visual_has_price_gate(boxes):
     )
 
 
+# B4-v1 empirical association eligibility. Intentionally narrow and derived
+# only from the observed AppliancesPriceList harness format. This is not a
+# universal price parser; association wiring is introduced in a later commit.
+_B4_V1_PRICE_ACCEPT_RE = re.compile(
+    r"^\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\s*/-\s*$"
+)
+_B4_V1_DIMENSION_RE = re.compile(r"\d+\s*[xX×]\s*\d+")
+_B4_V1_DIMENSION_UNIT_RE = re.compile(r"\d(?:[\d.,]*\s*)?(?:mm|cm)\b", re.I)
+_B4_V1_MALFORMED_APOSTROPHE_RE = re.compile(r"\d\s*['’]\s*\d")
+
+
+def _visual_association_price_classification_v1(raw_text):
+    """Classify one OCR token for B4-v1 association eligibility.
+
+    Reject rules win before accept. Acceptance is a full-string match of the
+    observed western-grouped INR-style '/-' form. Indian lakh grouping is a
+    known v1 exclusion and therefore falls into OTHER_REJECT.
+    """
+    text = clean_text(raw_text)
+    if _B4_V1_DIMENSION_RE.search(text) or _B4_V1_DIMENSION_UNIT_RE.search(text):
+        return "DIMENSION_REJECT"
+    if "-/" in text or _B4_V1_MALFORMED_APOSTROPHE_RE.search(text):
+        return "MALFORMED_REJECT"
+    if _B4_V1_PRICE_ACCEPT_RE.fullmatch(text):
+        return "ELIGIBLE"
+    return "OTHER_REJECT"
+
+
 def _visual_named_price_fallback(page_num, boxes, image_shape, existing_records, filename="", page_heading=""):
     """Review-only recovery for image-only catalogues with product name + visible price."""
     if not boxes:

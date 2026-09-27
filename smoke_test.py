@@ -54,6 +54,33 @@ except Exception as exc:
     print(f"VISUAL SKU REGRESSION FAIL: {type(exc).__name__}: {exc}")
     sys.exit(1)
 
+# B4-v1 price-association eligibility regression. These fixtures are the exact
+# token classes validated by the targeted harness/probe; no production wiring
+# exists yet in this commit.
+try:
+    eligibility_cases = {
+        "23,990/-": "ELIGIBLE",
+        "24,990/-": "ELIGIBLE",
+        "49,490/-": "ELIGIBLE",
+        "26,990/-": "ELIGIBLE",
+        "55,690/-": "ELIGIBLE",
+        "600 × 520 mm": "DIMENSION_REJECT",
+        "555 × 475 mm": "DIMENSION_REJECT",
+        "685 × 405 mm": "DIMENSION_REJECT",
+        "595 × 595 X 555 mm": "DIMENSION_REJECT",
+        "598 × 598 × 555 mm": "DIMENSION_REJECT",
+        "-/066'66": "MALFORMED_REJECT",
+    }
+    for raw, expected in eligibility_cases.items():
+        got = catalogfix_core._visual_association_price_classification_v1(raw)
+        if got != expected:
+            raise AssertionError(
+                f"B4 ELIGIBILITY REGRESSION: {raw!r} -> {got!r}, expected {expected!r}"
+            )
+except Exception as exc:
+    print(f"B4 ELIGIBILITY REGRESSION FAIL: {type(exc).__name__}: {exc}")
+    sys.exit(1)
+
 # Text/no-OCR route: exercises checkpoint setup, routing and return_meta plumbing.
 try:
     writer = PdfWriter()
