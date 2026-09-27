@@ -54,6 +54,18 @@ except Exception as exc:
     print(f"VISUAL SKU REGRESSION FAIL: {type(exc).__name__}: {exc}")
     sys.exit(1)
 
+# B4-v1 lane boundary freeze: association uses normalized center-x only.
+# The exact boundary semantics are LEFT for cx < 0.50 and RIGHT for cx >= 0.50.
+try:
+    assert catalogfix_core._visual_lane(0.49) == "LEFT"
+    assert catalogfix_core._visual_lane(0.50) == "RIGHT"
+    assert catalogfix_core._visual_lane(0.51) == "RIGHT"
+    # p.21 observed 55,690/- candidate center-x.
+    assert catalogfix_core._visual_lane(0.427) == "LEFT"
+except Exception as exc:
+    print(f"B4 LANE REGRESSION FAIL: {type(exc).__name__}: {exc}")
+    sys.exit(1)
+
 # B4-v1 price-association eligibility regression. These fixtures are the exact
 # token classes validated by the targeted harness/probe; no production wiring
 # exists yet in this commit.

@@ -1754,6 +1754,15 @@ def _visual_has_price_gate(boxes):
     )
 
 
+# --- B4 visual association geometry ---
+VISUAL_ASSOC_LANE_BOUNDARY_V1 = 0.50
+
+
+def _visual_lane(cx):
+    """cx is normalized (0..1). cx < 0.50 -> LEFT, cx >= 0.50 -> RIGHT."""
+    return "LEFT" if cx < VISUAL_ASSOC_LANE_BOUNDARY_V1 else "RIGHT"
+
+
 # B4-v1 empirical association eligibility. Intentionally narrow and derived
 # only from the observed AppliancesPriceList harness format. This is not a
 # universal price parser; association wiring is introduced in a later commit.
