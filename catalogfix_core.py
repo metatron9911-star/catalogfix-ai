@@ -1697,13 +1697,18 @@ def _visual_price_value(text):
     except Exception:
         return None
 
-def _visual_named_price_fallback(page_num, boxes, image_shape, existing_records, filename="", page_heading=""):
-    """Review-only recovery for image-only catalogues with product name + visible price."""
+def _visual_price_candidates(boxes, image_shape):
+    """
+    Return exactly the price candidates consumed by
+    _visual_named_price_fallback().
+
+    Production and debug tracing share this helper so observation cannot
+    drift from production candidate detection.
+    """
     if not boxes:
         return []
+
     h,w=image_shape[:2]
-    if any(clean_text(r.get("supplier_code","")) for r in existing_records):
-        return []
 
     def xy(b):
         return _bbox_center(b["bbox"])
@@ -1737,7 +1742,32 @@ def _visual_named_price_fallback(page_num, boxes, image_shape, existing_records,
         if any(abs(by-y)<.018*h and abs(bx-x)<.035*w and abs(val-v)<.01 for y,x,_,v in compact):
             continue
         compact.append((by,bx,b,val))
-    prices=compact
+    return compact
+
+
+def _visual_has_price_gate(boxes):
+    """Exact predicate used by production OCR-pass escalation logic."""
+    return any(
+        _visual_price_value(b.get("text","")) is not None
+        and re.search(r"(?:[$€£₹₽]|/-)", clean_text(b.get("text","")))
+        for b in boxes
+    )
+
+
+def _visual_named_price_fallback(page_num, boxes, image_shape, existing_records, filename="", page_heading=""):
+    """Review-only recovery for image-only catalogues with product name + visible price."""
+    if not boxes:
+        return []
+    h,w=image_shape[:2]
+    if any(clean_text(r.get("supplier_code","")) for r in existing_records):
+        return []
+
+    def xy(b):
+        return _bbox_center(b["bbox"])
+
+    prices=_visual_price_candidates(boxes, image_shape)
+    if not prices:
+        return []
 
     known_bad=re.compile(
         r"\b(material|width|control|speed|motor|lighting|filter|outlet|model|size|power|airflow|sensor|heat|type|suction|remote|stainless|glass|touch|gesture|yes|no|aluminium|aluminum|copper|collector|body|panel|voltage|frequency|capacity|dimensions?|watt|rpm|duct|finish|colour|color|warranty|input|output)\b",
@@ -1840,10 +1870,7 @@ def extract_visual_catalog_products(doc, page_num, filename="", dpi=150):
 
     first_codes=sum(len(_visual_codes_from_text(b.get("text",""))) for b in boxes)
     avg_score=(sum(float(b.get("score",0) or 0) for b in boxes)/len(boxes)) if boxes else 0.0
-    has_price=any(
-        _visual_price_value(b.get("text","")) is not None and re.search(r"(?:[$€£₹₽]|/-)",clean_text(b.get("text","")))
-        for b in boxes
-    )
+    has_price=_visual_has_price_gate(boxes)
     if first_codes==0 or avg_score<0.72 or not has_price:
         hi_dpi=max(220,int(dpi*1.45))
         try:
