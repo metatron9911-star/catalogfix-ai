@@ -1756,11 +1756,34 @@ def _visual_has_price_gate(boxes):
 
 # --- B4 visual association geometry ---
 VISUAL_ASSOC_LANE_BOUNDARY_V1 = 0.50
+VISUAL_ASSOC_MAX_BLOCK_HEIGHT_V1 = 0.445
 
 
 def _visual_lane(cx):
     """cx is normalized (0..1). cx < 0.50 -> LEFT, cx >= 0.50 -> RIGHT."""
     return "LEFT" if cx < VISUAL_ASSOC_LANE_BOUNDARY_V1 else "RIGHT"
+
+
+def _visual_owner(candidate_cy, skus_in_lane):
+    """Return the owning SKU code for a normalized candidate center-y, or None.
+
+    skus_in_lane must already be filtered to one lane and sorted ascending by
+    normalized cy. Ownership is top-down with half-open intervals:
+    [sku.cy, next_sku.cy) for non-last SKUs, and
+    [sku.cy, sku.cy + VISUAL_ASSOC_MAX_BLOCK_HEIGHT_V1) for the last SKU.
+    """
+    if not skus_in_lane:
+        return None
+
+    for index, sku in enumerate(skus_in_lane):
+        start = float(sku["cy"])
+        if index + 1 < len(skus_in_lane):
+            end = float(skus_in_lane[index + 1]["cy"])
+        else:
+            end = start + VISUAL_ASSOC_MAX_BLOCK_HEIGHT_V1
+        if start <= candidate_cy < end:
+            return sku["code"]
+    return None
 
 
 # B4-v1 empirical association eligibility. Intentionally narrow and derived

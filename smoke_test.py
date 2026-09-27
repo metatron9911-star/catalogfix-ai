@@ -66,6 +66,54 @@ except Exception as exc:
     print(f"B4 LANE REGRESSION FAIL: {type(exc).__name__}: {exc}")
     sys.exit(1)
 
+# B4-v1 ownership interval freeze: sampled geometry + explicit boundaries.
+try:
+    # p.11 RIGHT: non-last owner via [sku.cy, next_sku.cy)
+    assert catalogfix_core._visual_owner(0.421, [
+        {"code": "BRAVO60", "cy": 0.112},
+        {"code": "BRAVO78", "cy": 0.557},
+    ]) == "BRAVO60"
+
+    # p.21 LEFT: non-last owner via [sku.cy, next_sku.cy)
+    assert catalogfix_core._visual_owner(0.393, [
+        {"code": "BIO-01", "cy": 0.112},
+        {"code": "BIO-02", "cy": 0.557},
+    ]) == "BIO-01"
+
+    # Observed last-SKU eligible candidates within the conservative 0.445 cap.
+    assert catalogfix_core._visual_owner(
+        0.894, [{"code": "BRAVO60", "cy": 0.557}]
+    ) == "BRAVO60"
+    assert catalogfix_core._visual_owner(
+        0.895, [{"code": "BRAVO78", "cy": 0.557}]
+    ) == "BRAVO78"
+    assert catalogfix_core._visual_owner(
+        0.894, [{"code": "BIO-02", "cy": 0.557}]
+    ) == "BIO-02"
+
+    # Candidate exactly at the next SKU center belongs to that next SKU.
+    assert catalogfix_core._visual_owner(0.557, [
+        {"code": "BRAVO60", "cy": 0.112},
+        {"code": "BRAVO78", "cy": 0.557},
+    ]) == "BRAVO78"
+
+    # Beyond the last-SKU max depth: not owned.
+    assert catalogfix_core._visual_owner(
+        1.01, [{"code": "BRAVO78", "cy": 0.557}]
+    ) is None
+
+    # p.21 RIGHT geometry: no eligible was observed below IN-590, but the
+    # ownership interval remains open until cy + 0.445.
+    assert catalogfix_core._visual_owner(
+        1.0, [{"code": "IN-590", "cy": 0.829}]
+    ) == "IN-590"
+    assert catalogfix_core._visual_owner(
+        1.3, [{"code": "IN-590", "cy": 0.829}]
+    ) is None
+except Exception as exc:
+    print(f"B4 OWNERSHIP REGRESSION FAIL: {type(exc).__name__}: {exc}")
+    sys.exit(1)
+
 # B4-v1 price-association eligibility regression. These fixtures are the exact
 # token classes validated by the targeted harness/probe; no production wiring
 # exists yet in this commit.
