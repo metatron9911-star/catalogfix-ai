@@ -1857,6 +1857,174 @@ def _visual_association_price_classification_v1(raw_text):
     return "OTHER_REJECT"
 
 
+def _normalize_boxes(boxes, image_shape):
+    """Copy OCR boxes with one normalized page-space bbox per selected page pass."""
+    if not boxes:
+        return []
+    h, w = image_shape[:2]
+    if not h or not w:
+        return []
+    out = []
+    for box in boxes:
+        bbox = box.get("bbox")
+        if not bbox or len(bbox) != 4:
+            continue
+        try:
+            x1, y1, x2, y2 = (float(v) for v in bbox)
+        except (TypeError, ValueError):
+            continue
+        item = dict(box)
+        item["normalized_bbox"] = [x1 / w, y1 / h, x2 / w, y2 / h]
+        out.append(item)
+    return out
+
+
+def _b4_attributes(record):
+    """Return (attributes_dict, storage_kind) without changing the record."""
+    raw = record.get("attributes_json")
+    if isinstance(raw, dict):
+        return dict(raw), "dict"
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+        except Exception:
+            return {}, "string"
+        return (dict(parsed), "string") if isinstance(parsed, dict) else ({}, "string")
+    return {}, "other"
+
+
+def _b4_store_attributes(record, attrs, storage_kind):
+    """Preserve the pre-existing attributes_json representation where possible."""
+    if storage_kind == "dict":
+        record["attributes_json"] = attrs
+    else:
+        record["attributes_json"] = json.dumps(attrs, ensure_ascii=False)
+
+
+def _b4_selected_code_anchors(page_boxes_norm):
+    """Return selected-pass normalized physical anchors grouped by parsed code."""
+    anchors = {}
+    for box in page_boxes_norm or []:
+        bbox = box.get("normalized_bbox")
+        if not bbox or len(bbox) != 4:
+            continue
+        x1, y1, x2, y2 = (float(v) for v in bbox)
+        cx = (x1 + x2) / 2.0
+        cy = (y1 + y2) / 2.0
+        lane = _visual_lane(cx)
+        for code in _visual_codes_from_text(box.get("text", "")):
+            bucket = anchors.setdefault(code, [])
+            same_physical = any(
+                abs(cx - item["cx"]) <= VISUAL_ASSOC_BOX_CENTER_EPSILON_V1
+                and abs(cy - item["cy"]) <= VISUAL_ASSOC_BOX_CENTER_EPSILON_V1
+                for item in bucket
+            )
+            if not same_physical:
+                bucket.append({"code": code, "cx": cx, "cy": cy, "lane": lane})
+    return anchors
+
+
+def _b4_associate(records, page_boxes_norm, collision_codes, raw_page_boxes, page_shape):
+    """Apply B4-v1 association to supplier records only.
+
+    Geometry comes from one normalized selected page pass. Raw price detection
+    remains on the validated raw selected-pass boxes; only eligible candidate
+    centers are then normalized into the same page coordinate space.
+    """
+    supplier_records = [r for r in records if clean_text(r.get("supplier_code", ""))]
+    if not supplier_records:
+        return
+
+    selected_anchors = _b4_selected_code_anchors(page_boxes_norm)
+    skipped_codes = set(collision_codes)
+
+    # A record can be an ownership anchor only when the selected pass provides
+    # exactly one physical location for that canonical code.
+    record_anchor = {}
+    for record in supplier_records:
+        code = clean_text(record.get("supplier_code", ""))
+        if code in collision_codes:
+            continue
+        anchors = selected_anchors.get(code, [])
+        if len(anchors) != 1:
+            skipped_codes.add(code)
+            continue
+        record_anchor[code] = anchors[0]
+
+    # Same-lane same-cy anchors are geometrically ambiguous. Skip all members of
+    # each such group; equal cy across different lanes is a normal two-column row.
+    anchor_items = list(record_anchor.items())
+    for i, (code_a, a) in enumerate(anchor_items):
+        for code_b, b in anchor_items[i + 1:]:
+            if (
+                a["lane"] == b["lane"]
+                and abs(a["cy"] - b["cy"]) <= VISUAL_ASSOC_BOX_CENTER_EPSILON_V1
+            ):
+                skipped_codes.add(code_a)
+                skipped_codes.add(code_b)
+
+    skus_in_lane = {"LEFT": [], "RIGHT": []}
+    for code, anchor in record_anchor.items():
+        if code in skipped_codes:
+            continue
+        skus_in_lane[anchor["lane"]].append({"code": code, "cy": anchor["cy"]})
+    for lane in skus_in_lane:
+        skus_in_lane[lane].sort(key=lambda item: item["cy"])
+
+    owned = {}
+    h, w = page_shape[:2]
+    if h and w:
+        for _, _, box, price in _visual_price_candidates(raw_page_boxes, page_shape):
+            raw_text = clean_text(box.get("text", ""))
+            if _visual_association_price_classification_v1(raw_text) != "ELIGIBLE":
+                continue
+            bbox = box.get("bbox")
+            if not bbox or len(bbox) != 4:
+                continue
+            x1, y1, x2, y2 = (float(v) for v in bbox)
+            cx = ((x1 + x2) / 2.0) / w
+            cy = ((y1 + y2) / 2.0) / h
+            lane = _visual_lane(cx)
+            owner = _visual_owner(cy, skus_in_lane[lane])
+            if owner is None:
+                continue
+            owned.setdefault(owner, []).append({
+                "price": price,
+                "raw_text": raw_text,
+            })
+
+    for record in supplier_records:
+        code = clean_text(record.get("supplier_code", ""))
+        attrs, storage_kind = _b4_attributes(record)
+
+        if code in skipped_codes:
+            record["price"] = None
+            if attrs.get("price_source") != "visual-association-skipped":
+                attrs["price_source"] = "visual-association-skipped"
+                _b4_store_attributes(record, attrs, storage_kind)
+            continue
+
+        candidates = owned.get(code, [])
+        if not candidates:
+            # Preserve the exact existing missing state and serialized attributes.
+            record["price"] = None
+            continue
+
+        if len(candidates) == 1:
+            record["price"] = candidates[0]["price"]
+            attrs["price_source"] = "visual-associated"
+            attrs.pop("price_candidate_count", None)
+            attrs.pop("price_candidate_texts", None)
+            _b4_store_attributes(record, attrs, storage_kind)
+            continue
+
+        record["price"] = None
+        attrs["price_source"] = "visual-ambiguous"
+        attrs["price_candidate_count"] = len(candidates)
+        attrs["price_candidate_texts"] = [item["raw_text"] for item in candidates]
+        _b4_store_attributes(record, attrs, storage_kind)
+
+
 def _visual_named_price_fallback(page_num, boxes, image_shape, existing_records, filename="", page_heading=""):
     """Review-only recovery for image-only catalogues with product name + visible price."""
     if not boxes:
@@ -2034,10 +2202,21 @@ def extract_visual_catalog_products(doc, page_num, filename="", dpi=150):
 
     card_records=_visual_card_fallback(page_num,page_boxes,page_shape,records,page_heading)
     records.extend(card_records)
-    named_price_records=_visual_named_price_fallback(
-        page_num,page_boxes,page_shape,records,filename=filename,page_heading=page_heading
-    )
-    records.extend(named_price_records)
+
+    # B4-v1 integration: normalize the selected pass exactly once and use that
+    # coordinate space for collision, lane and ownership. The validated price
+    # detector still consumes raw selected-pass boxes + raw image shape.
+    page_boxes_norm=_normalize_boxes(page_boxes,page_shape)
+    supplier_present=any(clean_text(r.get("supplier_code","")) for r in records)
+    named_price_records=[]
+    if supplier_present:
+        collision_codes=_visual_collision_codes(page_boxes_norm)
+        _b4_associate(records,page_boxes_norm,collision_codes,page_boxes,page_shape)
+    else:
+        named_price_records=_visual_named_price_fallback(
+            page_num,page_boxes,page_shape,records,filename=filename,page_heading=page_heading
+        )
+        records.extend(named_price_records)
 
     report={
         "sheet":f"PDF p.{page_num}","source_rows":sum(len(p[2]) for p in passes),"source_columns":0,

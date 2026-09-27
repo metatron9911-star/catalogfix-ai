@@ -157,9 +157,118 @@ except Exception as exc:
     print(f"B4 COLLISION REGRESSION FAIL: {type(exc).__name__}: {exc}")
     sys.exit(1)
 
+# B4-v1 commit-6 wiring freeze: selected-pass normalization, supplier-only
+# mutation, same-lane/same-cy skip, collision skip, associated and ambiguous.
+try:
+    def _norm_box(text, bbox, score=0.99, width=1000.0, height=1000.0):
+        raw = {"text": text, "score": score, "bbox": bbox}
+        return catalogfix_core._normalize_boxes([raw], (height, width, 3))[0]
+
+    def _supplier(code, bbox):
+        return {
+            "supplier_code": code,
+            "sku": code,
+            "price": None,
+            "attributes_json": json.dumps({
+                "sku_bbox": bbox,
+                "price_source": "missing",
+                "keep": "same",
+            }),
+            "visual_confidence": 0.99,
+            "quality_confidence": 0.94,
+            "quality_flags": "generic_category",
+        }
+
+    # BRAVO60-style collision is skipped; unrelated derived fields stay untouched.
+    collision_records = [_supplier("BRAVO60", [550, 100, 650, 120])]
+    collision_boxes = [
+        _norm_box("Bravo 60-4", [550, 100, 650, 120]),
+        _norm_box("Bravo 60-3", [50, 550, 150, 570]),
+        _norm_box("24,990/-", [600, 850, 700, 870]),
+    ]
+    before_derived = (
+        collision_records[0]["visual_confidence"],
+        collision_records[0]["quality_confidence"],
+        collision_records[0]["quality_flags"],
+    )
+    catalogfix_core._b4_associate(
+        collision_records, collision_boxes, {"BRAVO60": 2},
+        [{"text": b["text"], "score": b["score"], "bbox": b["bbox"]} for b in collision_boxes],
+        (1000, 1000, 3),
+    )
+    assert collision_records[0]["price"] is None
+    assert json.loads(collision_records[0]["attributes_json"])["price_source"] == "visual-association-skipped"
+    assert before_derived == (
+        collision_records[0]["visual_confidence"],
+        collision_records[0]["quality_confidence"],
+        collision_records[0]["quality_flags"],
+    )
+
+    # Same cy in different lanes is valid; same lane + same cy skips both.
+    lane_records = [
+        _supplier("BIO-01", [50, 100, 150, 120]),
+        _supplier("BIO-05", [550, 100, 650, 120]),
+    ]
+    lane_boxes = [
+        _norm_box("Bio-01", [50, 100, 150, 120]),
+        _norm_box("Bio-05", [550, 100, 650, 120]),
+        _norm_box("55,690/-", [200, 350, 300, 370]),
+    ]
+    catalogfix_core._b4_associate(
+        lane_records, lane_boxes, {},
+        [{"text": b["text"], "score": b["score"], "bbox": b["bbox"]} for b in lane_boxes],
+        (1000, 1000, 3),
+    )
+    assert lane_records[0]["price"] == 55690.0
+    assert json.loads(lane_records[0]["attributes_json"])["price_source"] == "visual-associated"
+
+    same_lane_records = [
+        _supplier("MIN-300", [550, 100, 650, 120]),
+        _supplier("MAX-580", [650, 100, 750, 120]),
+    ]
+    same_lane_boxes = [
+        _norm_box("Min 300", [550, 100, 650, 120]),
+        _norm_box("Max 580", [650, 100, 750, 120]),
+    ]
+    catalogfix_core._b4_associate(
+        same_lane_records, same_lane_boxes, {},
+        [{"text": b["text"], "score": b["score"], "bbox": b["bbox"]} for b in same_lane_boxes],
+        (1000, 1000, 3),
+    )
+    assert all(
+        json.loads(r["attributes_json"])["price_source"] == "visual-association-skipped"
+        for r in same_lane_records
+    )
+
+    # Two eligible owned prices fail closed as ambiguous.
+    ambiguous_records = [_supplier("BIO-01", [50, 100, 150, 120])]
+    ambiguous_boxes = [
+        _norm_box("Bio-01", [50, 100, 150, 120]),
+        _norm_box("49,490/-", [200, 300, 300, 320]),
+        _norm_box("55,690/-", [200, 400, 300, 420]),
+    ]
+    catalogfix_core._b4_associate(
+        ambiguous_records, ambiguous_boxes, {},
+        [{"text": b["text"], "score": b["score"], "bbox": b["bbox"]} for b in ambiguous_boxes],
+        (1000, 1000, 3),
+    )
+    amb = json.loads(ambiguous_records[0]["attributes_json"])
+    assert ambiguous_records[0]["price"] is None
+    assert amb["price_source"] == "visual-ambiguous"
+    assert amb["price_candidate_count"] == 2
+    assert amb["price_candidate_texts"] == ["49,490/-", "55,690/-"]
+
+    # Non-supplier card records are outside B4 mutation scope.
+    card = {"supplier_code": "", "price": None, "attributes_json": "{\"keep\": true}"}
+    catalogfix_core._b4_associate([card], [], {}, [], (1000, 1000, 3))
+    assert card == {"supplier_code": "", "price": None, "attributes_json": "{\"keep\": true}"}
+except Exception as exc:
+    print(f"B4 WIRING REGRESSION FAIL: {type(exc).__name__}: {exc}")
+    sys.exit(1)
+
 # B4-v1 price-association eligibility regression. These fixtures are the exact
-# token classes validated by the targeted harness/probe; no production wiring
-# exists yet in this commit.
+# token classes validated by the targeted harness/probe; production wiring
+# is exercised separately above.
 try:
     eligibility_cases = {
         "23,990/-": "ELIGIBLE",
