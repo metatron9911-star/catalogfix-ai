@@ -17,6 +17,54 @@ from pypdf import PdfReader
 RELEASE_VERSION = "1.9.0"
 CHECKPOINT_VERSION = "pdf-pipeline-v8"
 
+_DEBUG_VISUAL_TRACE = os.getenv("DEBUG_VISUAL_TRACE", "").strip() == "1"
+_DEBUG_VISUAL_TRACE_RUN_ID = (
+    os.getenv("APIFY_ACTOR_RUN_ID")
+    or os.getenv("ACTOR_RUN_ID")
+    or "local-debug"
+)
+
+
+def _parse_debug_visual_trace_pages():
+    raw = os.getenv("DEBUG_VISUAL_TRACE_PAGES", "").strip()
+    if not raw:
+        return set()
+    pages = set()
+    for part in raw.split(","):
+        part = part.strip()
+        if part.isdigit() and int(part) > 0:
+            pages.add(int(part))
+    return pages
+
+
+_DEBUG_VISUAL_TRACE_PAGES = _parse_debug_visual_trace_pages()
+
+
+def _debug_visual_enabled(page_num):
+    return _DEBUG_VISUAL_TRACE and page_num in _DEBUG_VISUAL_TRACE_PAGES
+
+
+def _debug_bbox_payload(bbox, image_shape):
+    """Observation-only raw pixel bbox plus normalized page-space bbox."""
+    h, w = image_shape[:2]
+    raw = [round(float(x), 1) for x in bbox]
+    x1, y1, x2, y2 = raw
+    return {
+        "raw_bbox": raw,
+        "width_px": int(w),
+        "height_px": int(h),
+        "normalized_bbox": (
+            [
+                round(x1 / w, 6),
+                round(y1 / h, 6),
+                round(x2 / w, 6),
+                round(y2 / h, 6),
+            ]
+            if w and h
+            else None
+        ),
+    }
+
 try:
     import fitz  # PyMuPDF for fast page rendering
 except Exception:
@@ -1697,13 +1745,18 @@ def _visual_price_value(text):
     except Exception:
         return None
 
-def _visual_named_price_fallback(page_num, boxes, image_shape, existing_records, filename="", page_heading=""):
-    """Review-only recovery for image-only catalogues with product name + visible price."""
+def _visual_price_candidates(boxes, image_shape):
+    """
+    Return exactly the price candidates consumed by
+    _visual_named_price_fallback().
+
+    Production and debug tracing share this helper so observation cannot
+    drift from production candidate detection.
+    """
     if not boxes:
         return []
+
     h,w=image_shape[:2]
-    if any(clean_text(r.get("supplier_code","")) for r in existing_records):
-        return []
 
     def xy(b):
         return _bbox_center(b["bbox"])
@@ -1737,7 +1790,77 @@ def _visual_named_price_fallback(page_num, boxes, image_shape, existing_records,
         if any(abs(by-y)<.018*h and abs(bx-x)<.035*w and abs(val-v)<.01 for y,x,_,v in compact):
             continue
         compact.append((by,bx,b,val))
-    prices=compact
+    return compact
+
+
+def _visual_has_price_gate(boxes):
+    """Exact predicate used by production OCR-pass escalation logic."""
+    return any(
+        _visual_price_value(b.get("text","")) is not None
+        and re.search(r"(?:[$€£₹₽]|/-)", clean_text(b.get("text","")))
+        for b in boxes
+    )
+
+
+def _debug_price_candidate_snapshot(boxes, image_shape):
+    """Serialize the exact production price candidates without emitting records."""
+    out=[]
+    for _,_,box,price in _visual_price_candidates(boxes, image_shape):
+        item={
+            "raw_text":clean_text(box.get("text","")),
+            "price":price,
+            "score":round(float(box.get("score",0) or 0),4),
+        }
+        item.update(_debug_bbox_payload(box["bbox"], image_shape))
+        out.append(item)
+    return out
+
+
+def _debug_visual_pass_snapshot(page_num, dpi, shape, boxes, engine):
+    h,w=shape[:2]
+    supplier_candidates=[]
+    for b in boxes:
+        codes=_visual_codes_from_text(b.get("text",""))
+        if not codes:
+            continue
+        item={
+            "raw_text":clean_text(b.get("text","")),
+            "parsed_codes":codes,
+            "score":round(float(b.get("score",0) or 0),4),
+        }
+        item.update(_debug_bbox_payload(b["bbox"], shape))
+        supplier_candidates.append(item)
+
+    return {
+        "run_id":_DEBUG_VISUAL_TRACE_RUN_ID,
+        "debug_visual_trace":True,
+        "stage":"ocr-pass",
+        "page":page_num,
+        "dpi":dpi,
+        "engine":engine,
+        "width_px":int(w),
+        "height_px":int(h),
+        "aspect_ratio":round(w/h,8) if h else None,
+        "has_price_gate":bool(_visual_has_price_gate(boxes)),
+        "supplier_code_candidates":supplier_candidates,
+        "price_candidates":_debug_price_candidate_snapshot(boxes, shape),
+    }
+
+
+def _visual_named_price_fallback(page_num, boxes, image_shape, existing_records, filename="", page_heading=""):
+    """Review-only recovery for image-only catalogues with product name + visible price."""
+    if not boxes:
+        return []
+    h,w=image_shape[:2]
+    if any(clean_text(r.get("supplier_code","")) for r in existing_records):
+        return []
+
+    def xy(b):
+        return _bbox_center(b["bbox"])
+
+    prices=_visual_price_candidates(boxes, image_shape)
+    if not prices:
+        return []
 
     known_bad=re.compile(
         r"\b(material|width|control|speed|motor|lighting|filter|outlet|model|size|power|airflow|sensor|heat|type|suction|remote|stainless|glass|touch|gesture|yes|no|aluminium|aluminum|copper|collector|body|panel|voltage|frequency|capacity|dimensions?|watt|rpm|duct|finish|colour|color|warranty|input|output)\b",
@@ -1833,23 +1956,29 @@ def _visual_named_price_fallback(page_num, boxes, image_shape, existing_records,
 def extract_visual_catalog_products(doc, page_num, filename="", dpi=150):
     """Adaptive visual OCR without retaining full raster images between passes."""
     passes=[]
+    debug_pass_cache={}
     image,boxes,engine_name=_ocr_visual_pass(doc,page_num,dpi)
     shape=image.shape
     passes.append((dpi,shape,boxes,engine_name))
+    if _debug_visual_enabled(page_num):
+        snap=_debug_visual_pass_snapshot(page_num,dpi,shape,boxes,engine_name)
+        debug_pass_cache[id(boxes)]=snap
+        print(json.dumps(snap,ensure_ascii=False))
     del image
 
     first_codes=sum(len(_visual_codes_from_text(b.get("text",""))) for b in boxes)
     avg_score=(sum(float(b.get("score",0) or 0) for b in boxes)/len(boxes)) if boxes else 0.0
-    has_price=any(
-        _visual_price_value(b.get("text","")) is not None and re.search(r"(?:[$€£₹₽]|/-)",clean_text(b.get("text","")))
-        for b in boxes
-    )
+    has_price=_visual_has_price_gate(boxes)
     if first_codes==0 or avg_score<0.72 or not has_price:
         hi_dpi=max(220,int(dpi*1.45))
         try:
             image2,boxes2,engine2=_ocr_visual_pass(doc,page_num,hi_dpi)
             shape2=image2.shape
             passes.append((hi_dpi,shape2,boxes2,engine2))
+            if _debug_visual_enabled(page_num):
+                snap2=_debug_visual_pass_snapshot(page_num,hi_dpi,shape2,boxes2,engine2)
+                debug_pass_cache[id(boxes2)]=snap2
+                print(json.dumps(snap2,ensure_ascii=False))
             del image2
         except Exception:
             pass
@@ -1866,6 +1995,15 @@ def extract_visual_catalog_products(doc, page_num, filename="", dpi=150):
     page_boxes=best[2]
     page_shape=best[1]
     page_heading=_visual_heading(page_boxes,page_shape)
+    if _debug_visual_enabled(page_num):
+        print(json.dumps({
+            "run_id":_DEBUG_VISUAL_TRACE_RUN_ID,
+            "debug_visual_trace":True,
+            "stage":"selected-fallback-pass",
+            "page":page_num,
+            "selected_dpi":best[0],
+            "selected_from_logged_pass":id(page_boxes) in debug_pass_cache,
+        },ensure_ascii=False))
 
     brand=""
     stem=Path(filename or "").stem
@@ -1901,6 +2039,30 @@ def extract_visual_catalog_products(doc, page_num, filename="", dpi=150):
                 "price_source":"missing","scanner":f"v{RELEASE_VERSION}-adaptive-high-intelligence"
             },ensure_ascii=False)
         })
+
+    if _debug_visual_enabled(page_num):
+        trigger_codes=[
+            clean_text(r.get("supplier_code",""))
+            for r in records
+            if clean_text(r.get("supplier_code",""))
+        ]
+        supplier_code_present=bool(trigger_codes)
+        selected_snap=debug_pass_cache.get(id(page_boxes))
+        print(json.dumps({
+            "run_id":_DEBUG_VISUAL_TRACE_RUN_ID,
+            "debug_visual_trace":True,
+            "stage":"named-price-fallback-guard",
+            "page":page_num,
+            "guard_predicates":{
+                "supplier_code_present":supplier_code_present,
+            },
+            "would_block_named_price_fallback":supplier_code_present,
+            "supplier_codes_triggering_guard":trigger_codes,
+            # observation only, must not affect emitted records
+            "observed_price_candidates":(
+                selected_snap["price_candidates"] if selected_snap else []
+            ),
+        },ensure_ascii=False))
 
     card_records=_visual_card_fallback(page_num,page_boxes,page_shape,records,page_heading)
     records.extend(card_records)
@@ -1981,6 +2143,19 @@ def classify_pdf_page_text(text):
     if len(_visual_codes_from_text(t)) >= 2:
         return "TEXT_PRODUCT"
     return "TEXT_OTHER"
+
+
+def _debug_page_route_signals(text):
+    """Observation-only decomposition of classify_pdf_page_text()."""
+    t=clean_text(text)
+    return {
+        "text_len":len(t),
+        "lt_25":len(t)<25,
+        "numeric_product_card_signal":bool(_has_numeric_product_card_signal(text)),
+        "structured_price_signal":bool(_looks_like_price_page(t)),
+        "visual_code_count":len(_visual_codes_from_text(t)),
+        "route":classify_pdf_page_text(text),
+    }
 
 def _checkpoint_job_id(data, filename=""):
     """Stable ID for resume/autosave of the exact PDF bytes, even if the file is renamed."""
@@ -3553,6 +3728,15 @@ def smart_import_pdf(
         for i in range(scan_start, total_pages + 1):
             fast_text = fast_reader.pages[i-1].extract_text() or ""
             page_routes[i] = classify_pdf_page_text(fast_text)
+            if _debug_visual_enabled(i):
+                signals=_debug_page_route_signals(fast_text)
+                print(json.dumps({
+                    "run_id":_DEBUG_VISUAL_TRACE_RUN_ID,
+                    "debug_visual_trace":True,
+                    "stage":"page-route",
+                    "page":i,
+                    **signals,
+                },ensure_ascii=False))
             if i % chunk_size == 0 or i == total_pages:
                 manifest["scan_completed_through"] = i
                 manifest["page_routes"] = {str(k): v for k,v in sorted(page_routes.items())}
