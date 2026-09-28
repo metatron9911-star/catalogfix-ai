@@ -240,6 +240,20 @@ try:
         for r in same_lane_records
     )
 
+    # Zero owned eligible prices is a distinct B4-emitted protected null.
+    none_records = [_supplier("BIO-02", [50, 550, 150, 570])]
+    none_boxes = [
+        _norm_box("Bio-02", [50, 550, 150, 570]),
+        _norm_box("600 × 520 mm", [200, 850, 300, 870]),
+    ]
+    catalogfix_core._b4_associate(
+        none_records, none_boxes, {},
+        [{"text": b["text"], "score": b["score"], "bbox": b["bbox"]} for b in none_boxes],
+        (1000, 1000, 3),
+    )
+    assert none_records[0]["price"] is None
+    assert json.loads(none_records[0]["attributes_json"])["price_source"] == "visual-associated-none"
+
     # Two eligible owned prices fail closed as ambiguous.
     ambiguous_records = [_supplier("BIO-01", [50, 100, 150, 120])]
     ambiguous_boxes = [
@@ -264,6 +278,87 @@ try:
     assert card == {"supplier_code": "", "price": None, "attributes_json": "{\"keep\": true}"}
 except Exception as exc:
     print(f"B4 WIRING REGRESSION FAIL: {type(exc).__name__}: {exc}")
+    sys.exit(1)
+
+# B4->dedupe integration contract: protected B4 nulls stay null even when
+# duplicate-SKU records carry a price. Non-protected missing continues to enrich.
+try:
+    def _dedupe_fixture(sku, source, price, title, source_row):
+        return {
+            "sku": sku,
+            "title": title,
+            "brand": "Test",
+            "price": price,
+            "category": "Visual Catalog",
+            "size": "",
+            "color": "",
+            "description": title,
+            "barcode": "",
+            "source_sheet": "PDF p.1",
+            "source_row": source_row,
+            "supplier_code": sku,
+            "import_confidence": "HIGH",
+            "import_method": "visual-high-intelligence",
+            "source_page": 1,
+            "source_table": "visual-layout-page",
+            "matrix_series": "Visual Catalog",
+            "matrix_section": "Visual catalog",
+            "matrix_model": sku,
+            "variant_group": title,
+            "variant_codes": sku,
+            "currency": "",
+            "vat_note": "",
+            "attributes_json": json.dumps({"price_source": source, "keep": "base"}),
+            "visual_confidence": 0.99,
+            "router_type": "VISUAL_HI",
+            "quality_confidence": 0.94,
+            "quality_flags": "generic_category",
+            "category_source": "",
+            "dimension_original": "",
+            "dimension_suggestion": "",
+        }
+
+    for protected_source in [
+        "visual-ambiguous",
+        "visual-association-skipped",
+        "visual-associated-none",
+    ]:
+        protected_base = _dedupe_fixture(
+            f"PROTECTED-{protected_source}", protected_source, None,
+            "Long protected base title", 1,
+        )
+        priced_duplicate = _dedupe_fixture(
+            f"PROTECTED-{protected_source}", "visual-associated", 46990,
+            "Short", 2,
+        )
+        merged = catalogfix_core._dedupe_imported([protected_base, priced_duplicate])
+        assert len(merged) == 1
+        assert merged.iloc[0]["price"] is None
+        attrs = json.loads(merged.iloc[0]["attributes_json"])
+        assert attrs["price_source"] == protected_source
+        assert attrs["keep"] == "base"
+
+    ordinary_missing = _dedupe_fixture(
+        "ORDINARY-MISSING", "missing", None, "Long ordinary base title", 1
+    )
+    ordinary_priced = _dedupe_fixture(
+        "ORDINARY-MISSING", "visual-associated", 12345, "Short", 2
+    )
+    merged_missing = catalogfix_core._dedupe_imported([ordinary_missing, ordinary_priced])
+    assert merged_missing.iloc[0]["price"] == 12345
+    assert json.loads(merged_missing.iloc[0]["attributes_json"])["price_source"] == "missing"
+
+    associated_base = _dedupe_fixture(
+        "ASSOCIATED-KEEP", "visual-associated", 27990, "Long associated base title", 1
+    )
+    associated_other = _dedupe_fixture(
+        "ASSOCIATED-KEEP", "visual-associated", 24990, "Short", 2
+    )
+    merged_associated = catalogfix_core._dedupe_imported([associated_base, associated_other])
+    assert merged_associated.iloc[0]["price"] == 27990
+    assert json.loads(merged_associated.iloc[0]["attributes_json"])["price_source"] == "visual-associated"
+except Exception as exc:
+    print(f"B4 DEDUPE CONTRACT FAIL: {type(exc).__name__}: {exc}")
     sys.exit(1)
 
 # B4-v1 price-association eligibility regression. These fixtures are the exact

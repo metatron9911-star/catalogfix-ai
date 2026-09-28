@@ -452,6 +452,27 @@ def extract_pattern_products(raw, sheet_name, filename=""):
     return records
 
 
+_B4_PROTECTED_NULL_PRICE_SOURCES = {
+    "visual-ambiguous",
+    "visual-association-skipped",
+    "visual-associated-none",
+}
+
+
+def _price_source_from_attributes_json(value):
+    """Return price_source from dict/JSON-string attributes, else empty string."""
+    if isinstance(value, dict):
+        return clean_text(value.get("price_source", ""))
+    if isinstance(value, str) and value.strip():
+        try:
+            parsed = json.loads(value)
+        except Exception:
+            return ""
+        if isinstance(parsed, dict):
+            return clean_text(parsed.get("price_source", ""))
+    return ""
+
+
 def _dedupe_imported(records):
     columns = CANONICAL_FIELDS + [
         "source_sheet", "source_row", "supplier_code", "import_confidence", "import_method",
@@ -479,7 +500,14 @@ def _dedupe_imported(records):
         ordered["_title_len"] = ordered["title"].map(lambda x: -len(clean_text(x)))
         ordered = ordered.sort_values(["_pref", "_title_len", "source_row"])
         base = ordered.iloc[0].copy()
+        base_price_source = _price_source_from_attributes_json(base.get("attributes_json", ""))
+        protect_price_null = base_price_source in _B4_PROTECTED_NULL_PRICE_SOURCES
+        if protect_price_null:
+            base["price"] = None
+
         for col in columns:
+            if col == "price" and protect_price_null:
+                continue
             if clean_text(base.get(col, "")):
                 continue
             for _, candidate in ordered.iterrows():
@@ -2006,8 +2034,11 @@ def _b4_associate(records, page_boxes_norm, collision_codes, raw_page_boxes, pag
 
         candidates = owned.get(code, [])
         if not candidates:
-            # Preserve the exact existing missing state and serialized attributes.
             record["price"] = None
+            attrs["price_source"] = "visual-associated-none"
+            attrs.pop("price_candidate_count", None)
+            attrs.pop("price_candidate_texts", None)
+            _b4_store_attributes(record, attrs, storage_kind)
             continue
 
         if len(candidates) == 1:
