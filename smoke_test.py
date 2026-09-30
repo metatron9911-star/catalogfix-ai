@@ -361,6 +361,43 @@ except Exception as exc:
     print(f"B4 DEDUPE CONTRACT FAIL: {type(exc).__name__}: {exc}")
     sys.exit(1)
 
+# B3-B diagnostic lexical candidate classifier. Production extraction is not
+# wired to this helper yet; these fixtures freeze only the preregistered classes.
+try:
+    b3b_reject_cases = [
+        ("Upto 1350 m3/hr", "UPTO1350", "SEMANTIC_PREFIX_REJECT"),
+        ("Upto 1250 m3/hr", "UPTO1250", "SEMANTIC_PREFIX_REJECT"),
+        ("Min 300, Max 580", "MIN-300", "SEMANTIC_PREFIX_REJECT"),
+        ("Min 300, Max 580", "MAX-580", "SEMANTIC_PREFIX_REJECT"),
+        ("Price 60 cm", "PRICE60", "SEMANTIC_PREFIX_REJECT"),
+        ("Price 75 cm", "PRICE75", "SEMANTIC_PREFIX_REJECT"),
+        ("Shop 43, Ground floor, Atria Mall", "SHOP43", "ADDRESS_CONTEXT_REJECT"),
+        ("SCO 298, Sector - 29, Gurugram", "SCO-298", "ADDRESS_CONTEXT_REJECT"),
+        ("Showroom no -6, Binori B Square iii", "NO-6", "ADDRESS_CONTEXT_REJECT"),
+        ("Tangential fan 30-70°C adjustable thermostat", "FAN-30", "TEMPERATURE_CONTEXT_REJECT"),
+        ("Temp. Range Up to 60°C", "TO-60", "SEMANTIC_PHRASE_REJECT"),
+    ]
+    for raw, code, expected in b3b_reject_cases:
+        got = catalogfix_core._visual_code_candidate_classification_v1(raw, code)
+        if got != expected:
+            raise AssertionError(f"B3-B CLASSIFIER: {raw!r}, {code!r} -> {got!r}, expected {expected!r}")
+
+    b3b_accept_cases = [
+        ("Bravo 60-4", "BRAVO60"),
+        ("Bravo 78-3", "BRAVO78"),
+        ("Bio - 05", "BIO-05"),
+        ("MWO-1", "MWO-1"),
+        ("FSCR01", "FSCR01"),
+        ("CIGAR212", "CIGAR212"),
+    ]
+    for raw, code in b3b_accept_cases:
+        got = catalogfix_core._visual_code_candidate_classification_v1(raw, code)
+        if got != "ACCEPT":
+            raise AssertionError(f"B3-B ACCEPT REGRESSION: {raw!r}, {code!r} -> {got!r}")
+except Exception as exc:
+    print(f"B3-B CLASSIFIER REGRESSION FAIL: {type(exc).__name__}: {exc}")
+    sys.exit(1)
+
 # B4-v1 price-association eligibility regression. These fixtures are the exact
 # token classes validated by the targeted harness/probe; production wiring
 # is exercised separately above.

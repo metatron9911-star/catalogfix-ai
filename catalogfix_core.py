@@ -1389,6 +1389,53 @@ def _visual_codes_from_text(text):
                 found.append(code)
     return found
 
+
+_B3B_SEMANTIC_CODE_PREFIXES_V1 = {"PRICE", "UPTO", "MAX", "MIN"}
+_B3B_ADDRESS_CODE_PREFIXES_V1 = {"SHOP", "SCO", "NO"}
+_B3B_ADDRESS_CONTEXT_V1 = re.compile(
+    r"\b(?:SHOP|SHOWROOM|GROUND\s+FLOOR|FLOOR|MALL|SECTOR|ROAD|STREET|UNIT|"
+    r"MUMBAI|DELHI|GURUGRAM|AHMEDABAD|BODAKDEV)\b",
+    re.I,
+)
+
+
+def _visual_code_candidate_classification_v1(raw_text, code):
+    """B3-B diagnostic classifier for lexical false-positive SKU candidates.
+
+    This helper is intentionally not wired into production extraction yet.
+    It captures only preregistered, visually-grounded false-positive classes
+    while preserving ordinary product/model codes for a later gated wiring step.
+    """
+    raw = clean_text(raw_text)
+    normalized = clean_text(code).upper()
+    if not raw or not normalized:
+        return "OTHER_REJECT"
+
+    m = re.match(r"^([A-Z]+)", normalized)
+    prefix = m.group(1) if m else ""
+
+    # Table labels / prose values that look like PREFIX+digits after whitespace
+    # collapse: Price 60 cm, Upto 1350 m3/hr, Min 300, Max 580.
+    if prefix in _B3B_SEMANTIC_CODE_PREFIXES_V1:
+        return "SEMANTIC_PREFIX_REJECT"
+
+    # Address fragments on the cover page: Shop 43, SCO 298, showroom no-6.
+    if prefix in _B3B_ADDRESS_CODE_PREFIXES_V1 and _B3B_ADDRESS_CONTEXT_V1.search(raw):
+        return "ADDRESS_CONTEXT_REJECT"
+
+    # Temperature/range prose such as "fan 30-70°C" is not a supplier code.
+    if prefix == "FAN" and (
+        re.search(r"\d+\s*[-–]\s*\d+\s*°?\s*C\b", raw, re.I)
+        or re.search(r"\b(?:TEMP(?:ERATURE)?|THERMOSTAT|HEATING)\b", raw, re.I)
+    ):
+        return "TEMPERATURE_CONTEXT_REJECT"
+
+    # "up to 60°C" can yield TO-60 after lexical matching.
+    if prefix == "TO" and re.search(r"\bUP\s+TO\s+\d+", raw, re.I):
+        return "SEMANTIC_PHRASE_REJECT"
+
+    return "ACCEPT"
+
 def _get_ocr_engine():
     """Return ('rapidocr3', engine), legacy RapidOCR, Tesseract, or (None, None).
 
