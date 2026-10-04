@@ -1,12 +1,11 @@
 # CatalogFix AI — Supplier Catalog to Clean Product Data
 
-**Clean supplier catalogs. Nothing invented, nothing guessed.**
+Best for ecommerce teams, catalog operations, distributors, and agencies processing supplier catalogs.
 
-CatalogFix AI converts messy supplier PDFs, Excel files, and CSVs into structured product data with a clear **Ready / Needs Review** split.
+Upload a supplier PDF, Excel, or CSV catalog and get clean, structured product data with Ready/Review QA.
+Built for messy supplier files with OCR, visual parsing, confidence checks, and fail-closed handling when data is ambiguous.
 
-It is built for one thing most extraction tools handle badly: **uncertainty**.
-
-If a supplier SKU is not printed or cannot be verified, CatalogFix does not fabricate one. If a file is a technical datasheet rather than a product catalog, CatalogFix can intentionally return zero product rows instead of turning technical references into fake products.
+Turn supplier catalogs into import-ready product data — without inventing missing SKUs or silently guessing conflicting prices.
 
 ## Best for
 
@@ -114,4 +113,4 @@ The current self-service Store version accepts PDFs up to **500 pages**. Larger 
 
 ## Current release
 
-**CatalogFix AI v1.9.0**
+**Sellable v1**
