@@ -456,7 +456,57 @@ _B4_PROTECTED_NULL_PRICE_SOURCES = {
     "visual-ambiguous",
     "visual-association-skipped",
     "visual-associated-none",
+    "multi-page-conflict",
 }
+
+
+def _multi_page_price_conflict_v1(group):
+    """Return conflict metadata when one SKU has >1 distinct non-null prices across pages."""
+    observations = []
+    for _, row in group.iterrows():
+        price = row.get("price", None)
+        if price is None:
+            continue
+        try:
+            if pd.isna(price):
+                continue
+        except Exception:
+            pass
+        text = clean_text(price)
+        if not text:
+            continue
+        try:
+            numeric = float(str(price).replace(",", "").strip())
+        except Exception:
+            continue
+        page = clean_text(row.get("source_page", "")) or clean_text(row.get("source_row", ""))
+        observations.append((page, numeric))
+
+    distinct_prices = sorted({price for _, price in observations})
+    distinct_pages = sorted({page for page, _ in observations if page})
+    if len(distinct_prices) <= 1 or len(distinct_pages) <= 1:
+        return None
+
+    return {
+        "pages": distinct_pages,
+        "prices": distinct_prices,
+    }
+
+
+def _attributes_with_multi_page_conflict_v1(value, conflict):
+    attrs = {}
+    if isinstance(value, dict):
+        attrs = dict(value)
+    elif isinstance(value, str) and value.strip():
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, dict):
+                attrs = dict(parsed)
+        except Exception:
+            attrs = {}
+    attrs["price_source"] = "multi-page-conflict"
+    attrs["multi_page_price_conflict"] = conflict
+    return json.dumps(attrs, ensure_ascii=False)
 
 
 def _price_source_from_attributes_json(value):
@@ -500,6 +550,13 @@ def _dedupe_imported(records):
         ordered["_title_len"] = ordered["title"].map(lambda x: -len(clean_text(x)))
         ordered = ordered.sort_values(["_pref", "_title_len", "source_row"])
         base = ordered.iloc[0].copy()
+        multi_page_conflict = _multi_page_price_conflict_v1(group)
+        if multi_page_conflict:
+            base["price"] = None
+            base["attributes_json"] = _attributes_with_multi_page_conflict_v1(
+                base.get("attributes_json", ""), multi_page_conflict
+            )
+
         base_price_source = _price_source_from_attributes_json(base.get("attributes_json", ""))
         protect_price_null = base_price_source in _B4_PROTECTED_NULL_PRICE_SOURCES
         if protect_price_null:

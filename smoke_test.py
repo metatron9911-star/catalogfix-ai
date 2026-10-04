@@ -398,6 +398,47 @@ except Exception as exc:
     print(f"B3-B CLASSIFIER REGRESSION FAIL: {type(exc).__name__}: {exc}")
     sys.exit(1)
 
+# Multi-page SKU price policy v1: same SKU + conflicting non-null prices
+# across different source pages must fail closed; same price or one priced page is safe.
+try:
+    import pandas as _pd
+
+    conflict_group = _pd.DataFrame([
+        {"sku":"SKU-X","price":100,"source_page":1,"source_row":1},
+        {"sku":"SKU-X","price":120,"source_page":2,"source_row":2},
+    ])
+    got = catalogfix_core._multi_page_price_conflict_v1(conflict_group)
+    if not got or got["prices"] != [100.0, 120.0]:
+        raise AssertionError(f"MULTI-PAGE CONFLICT DETECTION: {got!r}")
+
+    same_price_group = _pd.DataFrame([
+        {"sku":"SKU-X","price":100,"source_page":1,"source_row":1},
+        {"sku":"SKU-X","price":100,"source_page":2,"source_row":2},
+    ])
+    if catalogfix_core._multi_page_price_conflict_v1(same_price_group) is not None:
+        raise AssertionError("MULTI-PAGE SAME PRICE should not conflict")
+
+    one_price_group = _pd.DataFrame([
+        {"sku":"SKU-X","price":100,"source_page":1,"source_row":1},
+        {"sku":"SKU-X","price":None,"source_page":2,"source_row":2},
+    ])
+    if catalogfix_core._multi_page_price_conflict_v1(one_price_group) is not None:
+        raise AssertionError("MULTI-PAGE ONE PRICE should not conflict")
+
+    deduped = catalogfix_core._dedupe_imported([
+        {"sku":"SKU-X","title":"A","price":100,"source_page":1,"source_row":1,"import_method":"visual-high-intelligence","attributes_json":"{}"},
+        {"sku":"SKU-X","title":"A","price":120,"source_page":2,"source_row":2,"import_method":"visual-high-intelligence","attributes_json":"{}"},
+    ])
+    row = deduped.iloc[0]
+    if row["price"] is not None:
+        raise AssertionError(f"MULTI-PAGE FAIL-CLOSED price={row['price']!r}")
+    attrs = json.loads(row["attributes_json"])
+    if attrs.get("price_source") != "multi-page-conflict":
+        raise AssertionError(f"MULTI-PAGE source={attrs!r}")
+except Exception as exc:
+    print(f"MULTI-PAGE POLICY REGRESSION FAIL: {type(exc).__name__}: {exc}")
+    sys.exit(1)
+
 # B3-B record-context regression: reject false codes whose meaning is only
 # recoverable after nearby visual context is known.
 try:
