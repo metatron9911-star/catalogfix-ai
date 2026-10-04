@@ -1374,6 +1374,21 @@ def _clean_visual_code(value):
         return f"{prefix}-{digits}" if len(prefix) <= 3 else prefix + digits
     return ""
 
+def _visual_code_record_context_classification_v1(code, nearby_label):
+    normalized = clean_text(code).upper()
+    nearby = clean_text(nearby_label).upper()
+    if not normalized:
+        return "OTHER_REJECT"
+
+    if normalized.startswith("FAN-") and re.search(r"\b(?:THERMOSTAT|TEMP(?:ERATURE)?|HEATING)\b", nearby, re.I):
+        return "TEMPERATURE_CONTEXT_REJECT"
+
+    if normalized.startswith("IN-") and re.search(r"\b(?:PRODUCT|CUTOUT|CARCASE)\s+DIMENSION\b", nearby, re.I):
+        return "DIMENSION_CONTEXT_REJECT"
+
+    return "ACCEPT"
+
+
 def _visual_codes_from_text(text):
     found = []
     raw = clean_text(text).upper()
@@ -2255,6 +2270,8 @@ def extract_visual_catalog_products(doc, page_num, filename="", dpi=150):
     records=[]
     for code,(ocr_conf,code_box,pboxes,pshape,pass_dpi,eng) in sorted(hits.items()):
         nearby_label,local_category=_local_visual_context(code_box,pboxes,pshape)
+        if _visual_code_record_context_classification_v1(code, nearby_label) != "ACCEPT":
+            continue
         category=local_category or page_heading or "Visual Catalog"
         if category=="Visual Catalog" and nearby_label and not _looks_like_marketing_copy(nearby_label):
             title=f"{nearby_label} {code}" if len(nearby_label.split())<=6 else code

@@ -398,6 +398,24 @@ except Exception as exc:
     print(f"B3-B CLASSIFIER REGRESSION FAIL: {type(exc).__name__}: {exc}")
     sys.exit(1)
 
+# B3-B record-context regression: reject false codes whose meaning is only
+# recoverable after nearby visual context is known.
+try:
+    b3b_record_context_cases = [
+        (("FAN-30", "adjustable thermostat"), "TEMPERATURE_CONTEXT_REJECT"),
+        (("FAN-30", "Tangential fan"), "ACCEPT"),
+        (("IN-590", "Product Dimension"), "DIMENSION_CONTEXT_REJECT"),
+        (("IN-590", "CARYSIL"), "ACCEPT"),
+        (("MWO-1", "Product Dimension"), "ACCEPT"),
+    ]
+    for args, expected in b3b_record_context_cases:
+        got = catalogfix_core._visual_code_record_context_classification_v1(*args)
+        if got != expected:
+            raise AssertionError(f"B3-B RECORD CONTEXT: {args!r} -> {got!r}, expected {expected!r}")
+except Exception as exc:
+    print(f"B3-B RECORD CONTEXT REGRESSION FAIL: {type(exc).__name__}: {exc}")
+    sys.exit(1)
+
 # B3-B production wiring regression: _visual_codes_from_text must now apply
 # the gated candidate classifier while preserving accepted supplier-code forms.
 try:
