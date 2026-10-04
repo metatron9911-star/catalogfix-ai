@@ -398,6 +398,40 @@ except Exception as exc:
     print(f"B3-B CLASSIFIER REGRESSION FAIL: {type(exc).__name__}: {exc}")
     sys.exit(1)
 
+# B3-B production wiring regression: _visual_codes_from_text must now apply
+# the gated candidate classifier while preserving accepted supplier-code forms.
+try:
+    b3b_wiring_reject = {
+        "Upto 1350 m3/hr": [],
+        "Price 75 cm": [],
+        "Min 300, Max 580": [],
+        "Shop 43, Ground floor, Atria Mall": [],
+        "SCO 298, Sector - 29, Gurugram": [],
+        "Showroom no -6, Binori B Square iii": [],
+        "Tangential fan 30-70°C adjustable thermostat": [],
+        "Temp. Range Up to 60°C": [],
+    }
+    for raw, expected in b3b_wiring_reject.items():
+        got = catalogfix_core._visual_codes_from_text(raw)
+        if got != expected:
+            raise AssertionError(f"B3-B WIRING REJECT: {raw!r} -> {got!r}, expected {expected!r}")
+
+    b3b_wiring_accept = {
+        "Bravo 60-4": ["BRAVO60"],
+        "Bravo 78-3": ["BRAVO78"],
+        "Bio - 05": ["BIO-05"],
+        "MWO-1": ["MWO-1"],
+        "FSCR01": ["FSCR01"],
+        "CIGAR212": ["CIGAR212"],
+    }
+    for raw, expected in b3b_wiring_accept.items():
+        got = catalogfix_core._visual_codes_from_text(raw)
+        if got != expected:
+            raise AssertionError(f"B3-B WIRING ACCEPT: {raw!r} -> {got!r}, expected {expected!r}")
+except Exception as exc:
+    print(f"B3-B WIRING REGRESSION FAIL: {type(exc).__name__}: {exc}")
+    sys.exit(1)
+
 # B4-v1 price-association eligibility regression. These fixtures are the exact
 # token classes validated by the targeted harness/probe; production wiring
 # is exercised separately above.

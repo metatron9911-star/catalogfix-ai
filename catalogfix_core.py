@@ -1386,6 +1386,8 @@ def _visual_codes_from_text(text):
                 # avoid likely years or dimensions accidentally prefixed by OCR garbage
                 if re.fullmatch(r"[A-Z]-?(19|20)\d{2}", code):
                     continue
+                if _visual_code_candidate_classification_v1(raw, code) != "ACCEPT":
+                    continue
                 found.append(code)
     return found
 
