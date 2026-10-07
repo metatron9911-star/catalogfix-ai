@@ -167,6 +167,110 @@ def _execute_queue_command(command):
         code, data, _ = _apify(f"/acts/{ACTOR_ID}", method="PUT", body=payload)
         return action, _brief_apify_result("status", code, data)
 
+    if action == "task-list":
+        code, data, _ = _apify("/actor-tasks?limit=1000")
+        items = ((data.get("data") or {}).get("items") or []) if isinstance(data, dict) else []
+        tasks = []
+        for item in items:
+            if item.get("actId") != ACTOR_ID:
+                continue
+            task_id = item.get("id")
+            detail_code, detail, _ = _apify(f"/actor-tasks/{task_id}")
+            task = (detail.get("data") or {}) if isinstance(detail, dict) else {}
+            tasks.append({
+                "id": task.get("id") or task_id,
+                "name": task.get("name") or item.get("name"),
+                "title": task.get("title"),
+                "description": task.get("description"),
+                "isPublic": task.get("isPublic"),
+                "publicConfig": task.get("publicConfig"),
+                "input": task.get("input"),
+                "httpStatus": detail_code,
+            })
+        return action, {"httpStatus": code, "tasks": tasks}
+
+    if action == "task-upsert":
+        spec = command.get("task")
+        if not isinstance(spec, dict):
+            raise ValueError("task object is required")
+        name = str(spec.get("name") or "").strip()
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]{1,62}", name):
+            raise ValueError("task.name must be a lowercase slug")
+        title = str(spec.get("title") or "").strip()
+        description = str(spec.get("description") or "").strip()
+        actor_input = spec.get("input")
+        public_config = spec.get("publicConfig")
+        if not (3 <= len(title) <= 63):
+            raise ValueError("task.title must be 3..63 characters")
+        if not description or len(description) > 400:
+            raise ValueError("task.description must be 1..400 characters")
+        if not isinstance(actor_input, dict):
+            raise ValueError("task.input must be an object")
+        if not isinstance(public_config, dict):
+            raise ValueError("task.publicConfig must be an object")
+
+        code, data, _ = _apify("/actor-tasks?limit=1000")
+        items = ((data.get("data") or {}).get("items") or []) if isinstance(data, dict) else []
+        existing = next((x for x in items if x.get("actId") == ACTOR_ID and x.get("name") == name), None)
+
+        if existing:
+            task_id = existing.get("id")
+            payload = {
+                "title": title,
+                "description": description,
+                "input": actor_input,
+                "publicConfig": public_config,
+            }
+            if "options" in spec:
+                payload["options"] = spec.get("options")
+            if "isPublic" in spec:
+                payload["isPublic"] = bool(spec.get("isPublic"))
+            update_code, updated, _ = _apify(f"/actor-tasks/{task_id}", method="PUT", body=payload)
+            task = (updated.get("data") or {}) if isinstance(updated, dict) else {}
+            return action, {
+                "httpStatus": update_code,
+                "created": False,
+                "task": {
+                    "id": task.get("id") or task_id,
+                    "name": task.get("name") or name,
+                    "title": task.get("title") or title,
+                    "isPublic": task.get("isPublic"),
+                    "publicConfig": task.get("publicConfig"),
+                },
+            }
+
+        create_payload = {
+            "actId": ACTOR_ID,
+            "name": name,
+            "title": title,
+            "description": description,
+            "input": actor_input,
+        }
+        if "options" in spec:
+            create_payload["options"] = spec.get("options")
+        create_code, created, _ = _apify("/actor-tasks", method="POST", body=create_payload)
+        task = (created.get("data") or {}) if isinstance(created, dict) else {}
+        task_id = task.get("id")
+        if create_code not in {200, 201} or not task_id:
+            return action, {"httpStatus": create_code, "created": False, "error": created}
+
+        update_payload = {"publicConfig": public_config}
+        if "isPublic" in spec:
+            update_payload["isPublic"] = bool(spec.get("isPublic"))
+        update_code, updated, _ = _apify(f"/actor-tasks/{task_id}", method="PUT", body=update_payload)
+        task2 = (updated.get("data") or {}) if isinstance(updated, dict) else {}
+        return action, {
+            "httpStatus": update_code,
+            "created": True,
+            "task": {
+                "id": task2.get("id") or task_id,
+                "name": task2.get("name") or name,
+                "title": task2.get("title") or title,
+                "isPublic": task2.get("isPublic"),
+                "publicConfig": task2.get("publicConfig"),
+            },
+        }
+
     if action == "build":
         version = str(command.get("version") or "0.0")
         tag = str(command.get("tag") or "latest")
@@ -266,7 +370,7 @@ def _execute_queue_command(command):
                 summary = {"raw": summary.decode("utf-8", "replace")[:2000]}
         return action, {"httpStatus": code, "summary": summary}
 
-    raise ValueError("unsupported action; allowed: status, actor-update, build, build-status, run, run-status, run-records, run-log-tail, run-summary, abort")
+    raise ValueError("unsupported action; allowed: status, actor-update, task-list, task-upsert, build, build-status, run, run-status, run-records, run-log-tail, run-summary, abort")
 
 
 def _set_state(**kwargs):
