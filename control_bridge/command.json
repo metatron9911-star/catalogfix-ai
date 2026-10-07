@@ -1,17 +1,17 @@
 {
-  "id": "catalogfix-example-clean-20261007-1935",
+  "id": "catalogfix-example-ecommerce-20261007-1937",
   "action": "task-upsert",
   "task": {
-    "name": "clean-product-catalog-data",
-    "title": "Clean Product Catalog Data",
-    "description": "Normalize supplier product records, separate Ready from Needs Review, and surface catalog-quality issues before import or publication.",
+    "name": "fix-ecommerce-product-catalog",
+    "title": "Fix Ecommerce Product Catalog",
+    "description": "Normalize ecommerce product records and flag duplicates, missing fields, invalid values, and other items that need review.",
     "input": {
-      "catalogFile": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/product-readiness-v1/fixtures/clean_catalog_demo.csv",
-      "filenameOverride": "clean_catalog_demo.csv"
+      "catalogFile": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/product-readiness-v1/fixtures/ecommerce_catalog_demo.csv",
+      "filenameOverride": "ecommerce_catalog_demo.csv"
     },
     "publicConfig": {
-      "seoTitle": "Clean Product Catalog Data | Catalog Quality Audit",
-      "seoDescription": "Normalize supplier catalog data and surface missing, inconsistent, or review-only product records before import or publication.",
+      "seoTitle": "Fix Ecommerce Product Catalog Data",
+      "seoDescription": "Normalize ecommerce catalog fields and flag duplicates, missing values, and other product records that need review before import.",
       "inputSchemaFields": [
         "catalogFile",
         "filenameOverride"
