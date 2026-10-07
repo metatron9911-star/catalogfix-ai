@@ -1,23 +1,4 @@
 {
-  "id": "catalogfix-example-audit-20261007-1938",
-  "action": "task-upsert",
-  "task": {
-    "name": "audit-catalog-before-marketplace-upload",
-    "title": "Audit Catalog Before Marketplace Upload",
-    "description": "Audit catalog quality before ecommerce or marketplace import and flag records with missing, invalid, duplicate, or review-only data.",
-    "input": {
-      "catalogFile": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/product-readiness-v1/fixtures/marketplace_audit_demo.csv",
-      "filenameOverride": "marketplace_audit_demo.csv"
-    },
-    "publicConfig": {
-      "seoTitle": "Product Catalog Audit Before Marketplace Upload",
-      "seoDescription": "Audit catalog quality before marketplace upload and flag missing, invalid, duplicate, or review-only product records before import.",
-      "inputSchemaFields": [
-        "catalogFile",
-        "filenameOverride"
-      ],
-      "datasetView": "qualityAtAGlance"
-    },
-    "isPublic": true
-  }
+  "id": "catalogfix-task-list-verify-20261007-1939",
+  "action": "task-list"
 }
