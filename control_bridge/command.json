@@ -1,9 +1,23 @@
 {
-  "id": "publish-store-20260921-2312",
-  "action": "actor-update",
-  "isPublic": true,
-  "exampleRunInput": {
-    "body": "{\"catalogFile\":\"https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/main/fixtures/store_smoke.csv\",\"filenameOverride\":\"store_smoke.csv\"}",
-    "contentType": "application/json; charset=utf-8"
+  "id": "catalogfix-example-clean-20261007-1935",
+  "action": "task-upsert",
+  "task": {
+    "name": "clean-product-catalog-data",
+    "title": "Clean Product Catalog Data",
+    "description": "Normalize supplier product records, separate Ready from Needs Review, and surface catalog-quality issues before import or publication.",
+    "input": {
+      "catalogFile": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/product-readiness-v1/fixtures/clean_catalog_demo.csv",
+      "filenameOverride": "clean_catalog_demo.csv"
+    },
+    "publicConfig": {
+      "seoTitle": "Clean Product Catalog Data | Catalog Quality Audit",
+      "seoDescription": "Normalize supplier catalog data and surface missing, inconsistent, or review-only product records before import or publication.",
+      "inputSchemaFields": [
+        "catalogFile",
+        "filenameOverride"
+      ],
+      "datasetView": "qualityAtAGlance"
+    },
+    "isPublic": true
   }
 }
