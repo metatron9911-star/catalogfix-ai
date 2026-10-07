@@ -1,0 +1,4 @@
+sku,title,brand,category,price,size,color,barcode,description
+ cfx-101 ,  Ceramic   Mug  ,CatalogFix Demo,Kitchen,19.90,350 ml,white,,Synthetic demonstration product
+CFX-102,Glass Storage Jar,CatalogFix Demo,Kitchen,,1 L,clear,,Synthetic example with missing price
+CFX-103,Cotton Table Runner,CatalogFix Demo,Home,29.50,140 cm,beige,,Synthetic demonstration product

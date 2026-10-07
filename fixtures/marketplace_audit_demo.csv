@@ -1,0 +1,6 @@
+sku,title,brand,category,price,size,color,description
+CFX-301,Stainless Steel Bottle,CatalogFix Demo,Kitchen,22.00,750 ml,silver,Synthetic valid product
+CFX-302,Travel Lunch Box,CatalogFix Demo,Kitchen,-5.00,1 L,blue,Synthetic negative price example
+CFX-303,,CatalogFix Demo,Home,17.00,30 cm,white,Synthetic missing title example
+CFX-304,Soft Cotton Towel,CatalogFix Demo,Home,18.00,70 cm,beige,Synthetic duplicate SKU example
+CFX-304,Large Cotton Towel,CatalogFix Demo,Home,24.00,100 cm,beige,Synthetic duplicate SKU example

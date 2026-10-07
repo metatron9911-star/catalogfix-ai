@@ -1,11 +1,30 @@
-# CatalogFix AI — Supplier Catalog to Clean Product Data
+# CatalogFix AI — Product Catalog Cleaning & Data Quality Audit
 
-Best for ecommerce teams, catalog operations, distributors, and agencies processing supplier catalogs.
+Clean messy product catalogs before they reach your store, marketplace, or feed.
+CatalogFix normalizes product fields, flags missing data, invalid prices and duplicates, and separates Ready rows from records needing manual review.
 
-Upload a supplier PDF, Excel, or CSV catalog and get clean, structured product data with Ready/Review QA.
-Built for messy supplier files with OCR, visual parsing, confidence checks, and fail-closed handling when data is ambiguous.
+Designed to reduce manual catalog QA before import or publication. Upload a supplier PDF, Excel, or CSV file; download structured products and an issue report.
 
-Turn supplier catalogs into import-ready product data — without inventing missing SKUs or silently guessing conflicting prices.
+## Quick start
+
+1. Run the prefilled two-product demo, or replace **Supplier catalog** with your PDF, CSV, XLSX or XLS file.
+2. Open **Catalog quality at a glance** to review product status and normalized values.
+3. Download **RESULT.xlsx** and check **Issues Found** for issue type, severity, affected field and current value.
+4. Review flagged rows before import. **SHOPIFY_READY.csv** contains rows passing the current quality gates; it is not a guarantee of acceptance by every marketplace.
+
+### Example results
+
+These results come from the bundled synthetic demonstration catalogs, processed by CatalogFix:
+
+| Record | Issue in Issues Found | Severity | Result / next action |
+| --- | --- | --- | --- |
+| CFX-101 | Extra spaces and lowercase SKU in source | — | Normalized SKU `CFX-101`, title `Ceramic Mug`, price `19.90`; READY |
+| CFX-102 | Missing or invalid price | Critical | NEEDS REVIEW; obtain the correct supplier price |
+| CFX-302 | Negative price | Critical | NEEDS REVIEW; confirm the price in the source |
+| CFX-304 | Duplicate SKU | Critical | NEEDS REVIEW; resolve the conflicting records |
+
+The next actions above are guidance for interpreting the report. CatalogFix does not fabricate missing values or generate a suggested repair for every issue. Possible duplicate products can be flagged for review even when their rows pass the basic Ready gates.
+
 
 ## Best for
 

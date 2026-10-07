@@ -1,7 +1,7 @@
 {
   "actorSpecification": 1,
   "name": "catalogfix-ai",
-  "title": "CatalogFix AI — Supplier Catalog to Clean Product Data",
+  "title": "CatalogFix AI — Product Catalog Cleaning & Data Quality Audit",
   "version": "1.9",
   "buildTag": "latest",
   "dockerfile": "./Dockerfile",

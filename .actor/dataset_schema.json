@@ -104,6 +104,48 @@
     }
   },
   "views": {
+    "qualityAtAGlance": {
+      "title": "Catalog quality at a glance",
+      "description": "Product status, quality flags and normalized values. Detailed issue type and severity are in RESULT.xlsx → Issues Found.",
+      "transformation": {
+        "fields": [
+          "sku",
+          "title",
+          "qa_status",
+          "quality_flags",
+          "price",
+          "quality_confidence",
+          "source_row"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "sku": {
+            "label": "Record / SKU"
+          },
+          "title": {
+            "label": "Normalized product title"
+          },
+          "qa_status": {
+            "label": "Ready / Review"
+          },
+          "quality_flags": {
+            "label": "Extraction quality flags"
+          },
+          "price": {
+            "label": "Normalized price",
+            "format": "number"
+          },
+          "quality_confidence": {
+            "label": "Confidence"
+          },
+          "source_row": {
+            "label": "Source row"
+          }
+        }
+      }
+    },
     "overview": {
       "title": "Product QA Overview",
       "description": "Normalized products with Ready/Review status and source quality context.",
