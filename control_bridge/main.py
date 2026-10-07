@@ -355,7 +355,7 @@ def _execute_queue_command(command):
             "useCache": "1" if command.get("useCache", True) else "0",
             "waitForFinish": 0,
         })
-        code, data, _ = _apify(f"/acts/{ACTOR_ID}/builds?{query}", method="POST", body={})
+        code, data, _ = _apify(f"/acts/{target_actor_id}/builds?{query}", method="POST", body={})
         return action, _brief_apify_result(action, code, data)
 
     if action == "build-status":
