@@ -26,6 +26,29 @@ These results come from the bundled synthetic demonstration catalogs, processed 
 The next actions above are guidance for interpreting the report. CatalogFix does not fabricate missing values or generate a suggested repair for every issue. Possible duplicate products can be flagged for review even when their rows pass the basic Ready gates.
 
 
+## Popular use cases
+
+### Clean supplier Excel catalog
+Normalize supplier spreadsheet product data, flag missing commercial fields, and separate Ready records from rows that need review.
+
+### Convert supplier PDF catalog to product data
+Extract structured product data from text-based or image-only supplier catalogs while keeping uncertain records review-only.
+
+### Find duplicate products in a catalog
+Surface duplicate or conflicting records before they reach Shopify, a marketplace, PIM, or product feed.
+
+### Check missing SKU and prices
+Flag records where supplier SKU, price, or other required commercial data is missing or uncertain.
+
+### Clean ecommerce CSV before import
+Use CatalogFix as a QA gate before uploading product data to your storefront or downstream feed.
+
+### Audit product feed before Shopify import
+Review catalog quality and separate import-ready products from records requiring manual attention.
+
+### Prepare supplier catalog for marketplace upload
+Clean and audit supplier product data before marketplace publication.
+
 ## Best for
 
 - supplier catalogs that need to become e-commerce product data;
@@ -122,6 +145,18 @@ CatalogFix uses **pay per event** with one charge per completed run:
 - **Technical/statistical non-catalog screening:** $1.00
 
 The current self-service Store version accepts PDFs up to **500 pages**. Larger catalogs should be split or handled as a managed/custom run.
+
+## API, automations, and AI agents
+
+CatalogFix can be run from the Apify Console, API, scheduled Tasks, integrations, and Apify MCP workflows. Public Example Tasks are named around concrete catalog-cleaning jobs so users and AI agents can start from a specific workflow instead of building an input from scratch.
+
+Common automation pattern: **supplier file → catalog QA → Ready / Needs Review → structured export or downstream ecommerce workflow**.
+
+## 60-second demo flow
+
+**Upload supplier CSV/PDF → normalize product fields → flag missing, invalid, or duplicate data → split Ready from Needs Review → download structured output and audit files.**
+
+Use the public Example Tasks in the Store to launch common catalog-cleaning scenarios with prefilled demonstration data.
 
 ## Notes and limitations
 
