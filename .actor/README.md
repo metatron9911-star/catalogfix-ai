@@ -107,7 +107,14 @@ The current self-service Store version accepts PDFs up to **500 pages**.
 
 The public Example Tasks in the Apify Store provide one-click scenarios for common catalog-cleaning jobs.
 
+## API, automations, and AI agents
+
+CatalogFix can be run from the Apify Console, API, scheduled Tasks, integrations, and Apify MCP workflows. Public Example Tasks cover common catalog-cleaning jobs so users and AI agents can start from a concrete workflow instead of building an input from scratch.
+
+Common automation pattern: **supplier file → catalog QA → Ready / Needs Review → structured export or downstream ecommerce workflow**.
+
 ## Notes and limitations
+
 
 - OCR-heavy PDFs take longer than text-based catalogs.
 - A second OCR pass may be triggered when the first pass is not reliable enough.
