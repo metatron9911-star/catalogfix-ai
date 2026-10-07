@@ -1,4 +1,9 @@
 {
-  "id": "catalogfix-task-list-verify-20261007-1939",
-  "action": "task-list"
+  "id": "leadgap-fix-example-input-20261007-2024",
+  "action": "actor-update",
+  "targetActorId": "M0aiz7xLf5Z0iqOi4",
+  "exampleRunInput": {
+    "body": "{\"country\":\"UK\",\"city\":\"Manchester\",\"businessType\":\"Dentist\",\"maxBusinesses\":30,\"maxResults\":10,\"minOpportunityScore\":0,\"websites\":[]}",
+    "contentType": "application/json; charset=utf-8"
+  }
 }
