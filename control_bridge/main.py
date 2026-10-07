@@ -177,7 +177,7 @@ def _execute_queue_command(command):
         items = ((data.get("data") or {}).get("items") or []) if isinstance(data, dict) else []
         tasks = []
         for item in items:
-            if item.get("actId") != ACTOR_ID:
+            if item.get("actId") != target_actor_id:
                 continue
             task_id = item.get("id")
             detail_code, detail, _ = _apify(f"/actor-tasks/{task_id}")
