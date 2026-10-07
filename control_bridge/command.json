@@ -1,9 +1,210 @@
 {
-  "id": "leadgap-store-categories-20261007-2027",
-  "action": "actor-update",
+  "id": "leadgap-7-more-example-tasks-20261007-2059",
+  "action": "task-upsert-many",
   "targetActorId": "M0aiz7xLf5Z0iqOi4",
-  "categories": [
-    "LEAD_GENERATION",
-    "SEO_TOOLS"
+  "tasks": [
+    {
+      "name": "find-plumber-leads-in-london",
+      "title": "Find Plumber Leads in London",
+      "description": "Find London plumbing businesses with actionable website gaps, public contact details, and grounded outreach angles.",
+      "input": {
+        "country": "UK",
+        "city": "London",
+        "businessType": "Plumber",
+        "maxBusinesses": 30,
+        "maxResults": 10,
+        "minOpportunityScore": 0,
+        "websites": []
+      },
+      "publicConfig": {
+        "seoTitle": "Find Plumber Leads in London",
+        "seoDescription": "Find London plumber leads with website gaps, public contact details, priority scoring, and grounded outreach angles for web and SEO services.",
+        "inputSchemaFields": [
+          "country",
+          "city",
+          "businessType",
+          "maxBusinesses",
+          "maxResults",
+          "minOpportunityScore",
+          "websites"
+        ],
+        "datasetView": "salesReadyLeads"
+      },
+      "isPublic": true
+    },
+    {
+      "name": "find-med-spa-leads-in-miami",
+      "title": "Find Med Spa Leads in Miami",
+      "description": "Find Miami med spas with actionable website and conversion gaps, public contact details, and outreach opportunities.",
+      "input": {
+        "country": "US",
+        "city": "Miami",
+        "businessType": "Med Spa",
+        "maxBusinesses": 30,
+        "maxResults": 10,
+        "minOpportunityScore": 0,
+        "websites": []
+      },
+      "publicConfig": {
+        "seoTitle": "Find Med Spa Leads in Miami",
+        "seoDescription": "Find Miami med spa leads with website and conversion gaps, public contact details, opportunity scores, and outreach hooks.",
+        "inputSchemaFields": [
+          "country",
+          "city",
+          "businessType",
+          "maxBusinesses",
+          "maxResults",
+          "minOpportunityScore",
+          "websites"
+        ],
+        "datasetView": "salesReadyLeads"
+      },
+      "isPublic": true
+    },
+    {
+      "name": "find-lawyer-leads-in-new-york",
+      "title": "Find Lawyer Leads in New York",
+      "description": "Find New York law firms with actionable website, contact, and conversion gaps for targeted agency outreach.",
+      "input": {
+        "country": "US",
+        "city": "New York",
+        "businessType": "Lawyer",
+        "maxBusinesses": 30,
+        "maxResults": 10,
+        "minOpportunityScore": 0,
+        "websites": []
+      },
+      "publicConfig": {
+        "seoTitle": "Find Lawyer Leads in New York",
+        "seoDescription": "Find New York lawyer leads with website gaps, public contact details, commercial opportunity scores, and outreach angles.",
+        "inputSchemaFields": [
+          "country",
+          "city",
+          "businessType",
+          "maxBusinesses",
+          "maxResults",
+          "minOpportunityScore",
+          "websites"
+        ],
+        "datasetView": "salesReadyLeads"
+      },
+      "isPublic": true
+    },
+    {
+      "name": "find-beauty-salon-leads-in-manchester",
+      "title": "Find Beauty Salon Leads in Manchester",
+      "description": "Find Manchester beauty salons with visible website, booking, contact, or mobile conversion opportunities.",
+      "input": {
+        "country": "UK",
+        "city": "Manchester",
+        "businessType": "Beauty Salon",
+        "maxBusinesses": 30,
+        "maxResults": 10,
+        "minOpportunityScore": 0,
+        "websites": []
+      },
+      "publicConfig": {
+        "seoTitle": "Find Beauty Salon Leads in Manchester",
+        "seoDescription": "Find Manchester beauty salon leads with booking and website gaps, public contacts, priority scoring, and outreach hooks.",
+        "inputSchemaFields": [
+          "country",
+          "city",
+          "businessType",
+          "maxBusinesses",
+          "maxResults",
+          "minOpportunityScore",
+          "websites"
+        ],
+        "datasetView": "salesReadyLeads"
+      },
+      "isPublic": true
+    },
+    {
+      "name": "find-accountant-leads-in-london",
+      "title": "Find Accountant Leads in London",
+      "description": "Find London accountants with actionable website and lead-capture gaps, public contacts, and grounded outreach angles.",
+      "input": {
+        "country": "UK",
+        "city": "London",
+        "businessType": "Accountant",
+        "maxBusinesses": 30,
+        "maxResults": 10,
+        "minOpportunityScore": 0,
+        "websites": []
+      },
+      "publicConfig": {
+        "seoTitle": "Find Accountant Leads in London",
+        "seoDescription": "Find London accountant leads with website and lead-capture gaps, public contact details, scoring, and outreach angles.",
+        "inputSchemaFields": [
+          "country",
+          "city",
+          "businessType",
+          "maxBusinesses",
+          "maxResults",
+          "minOpportunityScore",
+          "websites"
+        ],
+        "datasetView": "salesReadyLeads"
+      },
+      "isPublic": true
+    },
+    {
+      "name": "find-restaurants-with-weak-websites",
+      "title": "Find Restaurants With Weak Websites",
+      "description": "Find restaurants with website, reservation, ordering, mobile-contact, or conversion-path gaps worth reviewing for outreach.",
+      "input": {
+        "country": "UK",
+        "city": "London",
+        "businessType": "Restaurant",
+        "maxBusinesses": 30,
+        "maxResults": 10,
+        "minOpportunityScore": 0,
+        "websites": []
+      },
+      "publicConfig": {
+        "seoTitle": "Find Restaurants With Weak Websites",
+        "seoDescription": "Find restaurant leads with website, reservation, ordering, mobile-contact, and conversion gaps for targeted outreach.",
+        "inputSchemaFields": [
+          "country",
+          "city",
+          "businessType",
+          "maxBusinesses",
+          "maxResults",
+          "minOpportunityScore",
+          "websites"
+        ],
+        "datasetView": "salesReadyLeads"
+      },
+      "isPublic": true
+    },
+    {
+      "name": "find-local-businesses-without-online-booking",
+      "title": "Find Businesses Without Online Booking",
+      "description": "Find local businesses whose online customer journey shows missing or weak booking and enquiry conversion paths.",
+      "input": {
+        "country": "UK",
+        "city": "London",
+        "businessType": "Dentist",
+        "maxBusinesses": 30,
+        "maxResults": 10,
+        "minOpportunityScore": 0,
+        "websites": []
+      },
+      "publicConfig": {
+        "seoTitle": "Find Local Businesses Without Online Booking",
+        "seoDescription": "Find local businesses with missing or weak online booking and enquiry paths, public contact details, and outreach angles.",
+        "inputSchemaFields": [
+          "country",
+          "city",
+          "businessType",
+          "maxBusinesses",
+          "maxResults",
+          "minOpportunityScore",
+          "websites"
+        ],
+        "datasetView": "salesReadyLeads"
+      },
+      "isPublic": true
+    }
   ]
 }
