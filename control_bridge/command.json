@@ -1,208 +1,138 @@
 {
-  "id": "leadgap-7-more-example-tasks-20261007-2059",
+  "id": "catalogfix-7-more-example-tasks-20261007-2100",
   "action": "task-upsert-many",
-  "targetActorId": "M0aiz7xLf5Z0iqOi4",
+  "targetActorId": "QJX8h1Odtl2o8RdVq",
   "tasks": [
     {
-      "name": "find-plumber-leads-in-london",
-      "title": "Find Plumber Leads in London",
-      "description": "Find London plumbing businesses with actionable website gaps, public contact details, and grounded outreach angles.",
+      "name": "clean-supplier-excel-catalog",
+      "title": "Clean Supplier Excel Catalog",
+      "description": "Normalize supplier spreadsheet product data, flag missing commercial fields, and separate Ready records from Needs Review.",
       "input": {
-        "country": "UK",
-        "city": "London",
-        "businessType": "Plumber",
-        "maxBusinesses": 30,
-        "maxResults": 10,
-        "minOpportunityScore": 0,
-        "websites": []
+        "catalogFile": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/main/fixtures/clean_catalog_demo.csv",
+        "filenameOverride": "clean_catalog_demo.csv"
       },
       "publicConfig": {
-        "seoTitle": "Find Plumber Leads in London",
-        "seoDescription": "Find London plumber leads with website gaps, public contact details, priority scoring, and grounded outreach angles for web and SEO services.",
+        "seoTitle": "Clean Supplier Excel Catalog Data",
+        "seoDescription": "Clean supplier spreadsheet catalog data, flag missing or invalid fields, and separate import-ready products from records that need review.",
         "inputSchemaFields": [
-          "country",
-          "city",
-          "businessType",
-          "maxBusinesses",
-          "maxResults",
-          "minOpportunityScore",
-          "websites"
+          "catalogFile",
+          "filenameOverride"
         ],
-        "datasetView": "salesReadyLeads"
+        "datasetView": "qualityAtAGlance"
       },
       "isPublic": true
     },
     {
-      "name": "find-med-spa-leads-in-miami",
-      "title": "Find Med Spa Leads in Miami",
-      "description": "Find Miami med spas with actionable website and conversion gaps, public contact details, and outreach opportunities.",
+      "name": "convert-supplier-pdf-catalog-to-product-data",
+      "title": "Convert Supplier PDF Catalog to Product Data",
+      "description": "Extract and normalize supplier catalog product data, preserve source context, and route uncertain records to review.",
       "input": {
-        "country": "US",
-        "city": "Miami",
-        "businessType": "Med Spa",
-        "maxBusinesses": 30,
-        "maxResults": 10,
-        "minOpportunityScore": 0,
-        "websites": []
+        "catalogFile": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/main/fixtures/marketplace_audit_demo.csv",
+        "filenameOverride": "marketplace_audit_demo.csv"
       },
       "publicConfig": {
-        "seoTitle": "Find Med Spa Leads in Miami",
-        "seoDescription": "Find Miami med spa leads with website and conversion gaps, public contact details, opportunity scores, and outreach hooks.",
+        "seoTitle": "Convert Supplier PDF Catalog to Product Data",
+        "seoDescription": "Convert supplier catalog content into normalized product data with source context, quality checks, and Ready versus Needs Review status.",
         "inputSchemaFields": [
-          "country",
-          "city",
-          "businessType",
-          "maxBusinesses",
-          "maxResults",
-          "minOpportunityScore",
-          "websites"
+          "catalogFile",
+          "filenameOverride"
         ],
-        "datasetView": "salesReadyLeads"
+        "datasetView": "qualityAtAGlance"
       },
       "isPublic": true
     },
     {
-      "name": "find-lawyer-leads-in-new-york",
-      "title": "Find Lawyer Leads in New York",
-      "description": "Find New York law firms with actionable website, contact, and conversion gaps for targeted agency outreach.",
+      "name": "find-duplicate-products-in-catalog",
+      "title": "Find Duplicate Products in Catalog",
+      "description": "Audit a product catalog for duplicate or conflicting records before ecommerce, PIM, feed, or marketplace import.",
       "input": {
-        "country": "US",
-        "city": "New York",
-        "businessType": "Lawyer",
-        "maxBusinesses": 30,
-        "maxResults": 10,
-        "minOpportunityScore": 0,
-        "websites": []
+        "catalogFile": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/main/fixtures/ecommerce_catalog_demo.csv",
+        "filenameOverride": "ecommerce_catalog_demo.csv"
       },
       "publicConfig": {
-        "seoTitle": "Find Lawyer Leads in New York",
-        "seoDescription": "Find New York lawyer leads with website gaps, public contact details, commercial opportunity scores, and outreach angles.",
+        "seoTitle": "Find Duplicate Products in a Catalog",
+        "seoDescription": "Find duplicate or conflicting product records and review catalog quality before ecommerce, PIM, feed, or marketplace import.",
         "inputSchemaFields": [
-          "country",
-          "city",
-          "businessType",
-          "maxBusinesses",
-          "maxResults",
-          "minOpportunityScore",
-          "websites"
+          "catalogFile",
+          "filenameOverride"
         ],
-        "datasetView": "salesReadyLeads"
+        "datasetView": "qualityAtAGlance"
       },
       "isPublic": true
     },
     {
-      "name": "find-beauty-salon-leads-in-manchester",
-      "title": "Find Beauty Salon Leads in Manchester",
-      "description": "Find Manchester beauty salons with visible website, booking, contact, or mobile conversion opportunities.",
+      "name": "check-missing-sku-and-prices",
+      "title": "Check Missing SKU and Prices",
+      "description": "Flag products with missing or uncertain supplier SKU, price, and other required commercial data before import.",
       "input": {
-        "country": "UK",
-        "city": "Manchester",
-        "businessType": "Beauty Salon",
-        "maxBusinesses": 30,
-        "maxResults": 10,
-        "minOpportunityScore": 0,
-        "websites": []
+        "catalogFile": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/main/fixtures/marketplace_audit_demo.csv",
+        "filenameOverride": "marketplace_audit_demo.csv"
       },
       "publicConfig": {
-        "seoTitle": "Find Beauty Salon Leads in Manchester",
-        "seoDescription": "Find Manchester beauty salon leads with booking and website gaps, public contacts, priority scoring, and outreach hooks.",
+        "seoTitle": "Check Missing SKU and Product Prices",
+        "seoDescription": "Audit a supplier catalog for missing SKU, price, and required commercial fields before ecommerce or marketplace import.",
         "inputSchemaFields": [
-          "country",
-          "city",
-          "businessType",
-          "maxBusinesses",
-          "maxResults",
-          "minOpportunityScore",
-          "websites"
+          "catalogFile",
+          "filenameOverride"
         ],
-        "datasetView": "salesReadyLeads"
+        "datasetView": "qualityAtAGlance"
       },
       "isPublic": true
     },
     {
-      "name": "find-accountant-leads-in-london",
-      "title": "Find Accountant Leads in London",
-      "description": "Find London accountants with actionable website and lead-capture gaps, public contacts, and grounded outreach angles.",
+      "name": "clean-ecommerce-csv-before-import",
+      "title": "Clean Ecommerce CSV Before Import",
+      "description": "Normalize ecommerce CSV product fields and separate clean import-ready rows from records that need manual review.",
       "input": {
-        "country": "UK",
-        "city": "London",
-        "businessType": "Accountant",
-        "maxBusinesses": 30,
-        "maxResults": 10,
-        "minOpportunityScore": 0,
-        "websites": []
+        "catalogFile": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/main/fixtures/ecommerce_catalog_demo.csv",
+        "filenameOverride": "ecommerce_catalog_demo.csv"
       },
       "publicConfig": {
-        "seoTitle": "Find Accountant Leads in London",
-        "seoDescription": "Find London accountant leads with website and lead-capture gaps, public contact details, scoring, and outreach angles.",
+        "seoTitle": "Clean Ecommerce CSV Before Import",
+        "seoDescription": "Clean and normalize ecommerce CSV product data before import, with duplicate checks and Ready versus Needs Review output.",
         "inputSchemaFields": [
-          "country",
-          "city",
-          "businessType",
-          "maxBusinesses",
-          "maxResults",
-          "minOpportunityScore",
-          "websites"
+          "catalogFile",
+          "filenameOverride"
         ],
-        "datasetView": "salesReadyLeads"
+        "datasetView": "qualityAtAGlance"
       },
       "isPublic": true
     },
     {
-      "name": "find-restaurants-with-weak-websites",
-      "title": "Find Restaurants With Weak Websites",
-      "description": "Find restaurants with website, reservation, ordering, mobile-contact, or conversion-path gaps worth reviewing for outreach.",
+      "name": "audit-product-feed-before-shopify-import",
+      "title": "Audit Product Feed Before Shopify Import",
+      "description": "Audit product data quality before Shopify import and flag missing, invalid, duplicate, or uncertain records.",
       "input": {
-        "country": "UK",
-        "city": "London",
-        "businessType": "Restaurant",
-        "maxBusinesses": 30,
-        "maxResults": 10,
-        "minOpportunityScore": 0,
-        "websites": []
+        "catalogFile": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/main/fixtures/ecommerce_catalog_demo.csv",
+        "filenameOverride": "ecommerce_catalog_demo.csv"
       },
       "publicConfig": {
-        "seoTitle": "Find Restaurants With Weak Websites",
-        "seoDescription": "Find restaurant leads with website, reservation, ordering, mobile-contact, and conversion gaps for targeted outreach.",
+        "seoTitle": "Audit Product Feed Before Shopify Import",
+        "seoDescription": "Audit product feed quality before Shopify import and flag missing, invalid, duplicate, or uncertain catalog records.",
         "inputSchemaFields": [
-          "country",
-          "city",
-          "businessType",
-          "maxBusinesses",
-          "maxResults",
-          "minOpportunityScore",
-          "websites"
+          "catalogFile",
+          "filenameOverride"
         ],
-        "datasetView": "salesReadyLeads"
+        "datasetView": "qualityAtAGlance"
       },
       "isPublic": true
     },
     {
-      "name": "find-local-businesses-without-online-booking",
-      "title": "Find Businesses Without Online Booking",
-      "description": "Find local businesses whose online customer journey shows missing or weak booking and enquiry conversion paths.",
+      "name": "prepare-supplier-catalog-for-marketplace-upload",
+      "title": "Prepare Catalog for Marketplace Upload",
+      "description": "Clean and audit supplier product data before marketplace upload, with normalized fields and clear review-only records.",
       "input": {
-        "country": "UK",
-        "city": "London",
-        "businessType": "Dentist",
-        "maxBusinesses": 30,
-        "maxResults": 10,
-        "minOpportunityScore": 0,
-        "websites": []
+        "catalogFile": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/main/fixtures/marketplace_audit_demo.csv",
+        "filenameOverride": "marketplace_audit_demo.csv"
       },
       "publicConfig": {
-        "seoTitle": "Find Local Businesses Without Online Booking",
-        "seoDescription": "Find local businesses with missing or weak online booking and enquiry paths, public contact details, and outreach angles.",
+        "seoTitle": "Prepare Supplier Catalog for Marketplace Upload",
+        "seoDescription": "Clean and audit supplier catalog data before marketplace upload, with normalized fields and clear Ready or Needs Review status.",
         "inputSchemaFields": [
-          "country",
-          "city",
-          "businessType",
-          "maxBusinesses",
-          "maxResults",
-          "minOpportunityScore",
-          "websites"
+          "catalogFile",
+          "filenameOverride"
         ],
-        "datasetView": "salesReadyLeads"
+        "datasetView": "qualityAtAGlance"
       },
       "isPublic": true
     }
