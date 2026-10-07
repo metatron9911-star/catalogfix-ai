@@ -1,63 +1,8 @@
 {
-  "id": "leadgap-swap-general-for-booking-task-20261007-2103",
-  "action": "task-upsert-many",
+  "id": "build-leadgap-store-20261007-2105",
+  "action": "build",
   "targetActorId": "M0aiz7xLf5Z0iqOi4",
-  "tasks": [
-    {
-      "name": "find-local-businesses-with-website-gaps",
-      "title": "Find Local Businesses With Website Gaps",
-      "description": "Discover qualified local businesses with concrete website conversion gaps and grounded outreach hooks. Choose your niche and city; the example uses Manchester restaurants. Returns qualified opportunities, not just scraped businesses.",
-      "input": {
-        "businessType": "Restaurant",
-        "city": "Manchester",
-        "country": "UK",
-        "maxBusinesses": 30,
-        "maxResults": 10,
-        "minOpportunityScore": 0
-      },
-      "publicConfig": {
-        "seoTitle": "Local Business Leads With Website Gaps",
-        "seoDescription": "Find local businesses with website conversion gaps, filtered public contact data, sales priority, and grounded outreach hooks.",
-        "inputSchemaFields": [
-          "country",
-          "city",
-          "businessType",
-          "maxBusinesses",
-          "maxResults",
-          "minOpportunityScore"
-        ],
-        "datasetView": "salesReadyLeads"
-      },
-      "isPublic": false
-    },
-    {
-      "name": "find-local-businesses-without-online-booking",
-      "title": "Find Businesses Without Online Booking",
-      "description": "Find local businesses whose online customer journey shows missing or weak booking and enquiry conversion paths.",
-      "input": {
-        "country": "UK",
-        "city": "London",
-        "businessType": "Dentist",
-        "maxBusinesses": 30,
-        "maxResults": 10,
-        "minOpportunityScore": 0,
-        "websites": []
-      },
-      "publicConfig": {
-        "seoTitle": "Find Businesses Without Online Booking",
-        "seoDescription": "Find local businesses with missing or weak online booking and enquiry paths, public contact details, and grounded outreach angles.",
-        "inputSchemaFields": [
-          "country",
-          "city",
-          "businessType",
-          "maxBusinesses",
-          "maxResults",
-          "minOpportunityScore",
-          "websites"
-        ],
-        "datasetView": "salesReadyLeads"
-      },
-      "isPublic": true
-    }
-  ]
+  "version": "0.0",
+  "tag": "latest",
+  "useCache": true
 }
