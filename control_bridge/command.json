@@ -1,17 +1,17 @@
 {
-  "id": "catalogfix-example-ecommerce-20261007-1937",
+  "id": "catalogfix-example-audit-20261007-1938",
   "action": "task-upsert",
   "task": {
-    "name": "fix-ecommerce-product-catalog",
-    "title": "Fix Ecommerce Product Catalog",
-    "description": "Normalize ecommerce product records and flag duplicates, missing fields, invalid values, and other items that need review.",
+    "name": "audit-catalog-before-marketplace-upload",
+    "title": "Audit Catalog Before Marketplace Upload",
+    "description": "Audit catalog quality before ecommerce or marketplace import and flag records with missing, invalid, duplicate, or review-only data.",
     "input": {
-      "catalogFile": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/product-readiness-v1/fixtures/ecommerce_catalog_demo.csv",
-      "filenameOverride": "ecommerce_catalog_demo.csv"
+      "catalogFile": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/product-readiness-v1/fixtures/marketplace_audit_demo.csv",
+      "filenameOverride": "marketplace_audit_demo.csv"
     },
     "publicConfig": {
-      "seoTitle": "Fix Ecommerce Product Catalog Data",
-      "seoDescription": "Normalize ecommerce catalog fields and flag duplicates, missing values, and other product records that need review before import.",
+      "seoTitle": "Product Catalog Audit Before Marketplace Upload",
+      "seoDescription": "Audit catalog quality before marketplace upload and flag missing, invalid, duplicate, or review-only product records before import.",
       "inputSchemaFields": [
         "catalogFile",
         "filenameOverride"
