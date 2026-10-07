@@ -12,6 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 APIFY_API = "https://api.apify.com/v2"
 ACTOR_ID = os.environ.get("APIFY_ACTOR_ID", "QJX8h1Odtl2o8RdVq")
+ALLOWED_ACTOR_IDS = {ACTOR_ID, "QJX8h1Odtl2o8RdVq", "M0aiz7xLf5Z0iqOi4"}
 APIFY_TOKEN = os.environ.get("APIFY_TOKEN", "")
 CONTROL_API_KEY = os.environ.get("CONTROL_API_KEY", "")
 PORT = int(os.environ.get("PORT", "8080"))
@@ -155,16 +156,20 @@ def _brief_apify_result(action, code, payload):
 
 def _execute_queue_command(command):
     action = str(command.get("action", "")).lower().strip()
+    target_actor_id = str(command.get("targetActorId") or ACTOR_ID).strip()
+    if target_actor_id not in ALLOWED_ACTOR_IDS:
+        raise ValueError("targetActorId is not allowed")
+
     if action == "status":
-        code, data, _ = _apify(f"/acts/{ACTOR_ID}")
+        code, data, _ = _apify(f"/acts/{target_actor_id}")
         return action, _brief_apify_result(action, code, data)
 
     if action == "actor-update":
-        allowed = {"title", "description", "seoTitle", "seoDescription", "categories", "actorPermissionLevel", "defaultRunOptions", "exampleRunInput", "pricingInfos", "isPublic"}
+        allowed = {"title", "description", "seoTitle", "seoDescription", "categories", "actorPermissionLevel", "defaultRunOptions", "exampleRunInput", "pricingInfos", "isPublic", "pictureUrl", "notice"}
         payload = {k: v for k, v in command.items() if k in allowed}
         if not payload:
             raise ValueError("no allowed Actor fields supplied")
-        code, data, _ = _apify(f"/acts/{ACTOR_ID}", method="PUT", body=payload)
+        code, data, _ = _apify(f"/acts/{target_actor_id}", method="PUT", body=payload)
         return action, _brief_apify_result("status", code, data)
 
     if action == "task-list":
