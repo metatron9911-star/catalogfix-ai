@@ -194,6 +194,76 @@ def _execute_queue_command(command):
             })
         return action, {"httpStatus": code, "tasks": tasks}
 
+    if action == "task-upsert-many":
+        specs = command.get("tasks")
+        if not isinstance(specs, list) or not specs:
+            raise ValueError("tasks array is required")
+        if len(specs) > 20:
+            raise ValueError("too many tasks")
+        code, data, _ = _apify("/actor-tasks?limit=1000")
+        items = ((data.get("data") or {}).get("items") or []) if isinstance(data, dict) else []
+        results = []
+        for spec in specs:
+            if not isinstance(spec, dict):
+                results.append({"ok": False, "error": "task object required"})
+                continue
+            name = str(spec.get("name") or "").strip()
+            title = str(spec.get("title") or "").strip()
+            description = str(spec.get("description") or "").strip()
+            actor_input = spec.get("input")
+            public_config = spec.get("publicConfig")
+            if not re.fullmatch(r"[a-z0-9][a-z0-9-]{1,62}", name):
+                results.append({"name": name, "ok": False, "error": "invalid name"})
+                continue
+            if not (3 <= len(title) <= 63) or not description or len(description) > 400:
+                results.append({"name": name, "ok": False, "error": "invalid title/description"})
+                continue
+            if not isinstance(actor_input, dict) or not isinstance(public_config, dict):
+                results.append({"name": name, "ok": False, "error": "input/publicConfig must be objects"})
+                continue
+            existing = next((x for x in items if x.get("actId") == target_actor_id and x.get("name") == name), None)
+            try:
+                if existing:
+                    task_id = existing.get("id")
+                    payload = {
+                        "title": title,
+                        "description": description,
+                        "input": actor_input,
+                        "publicConfig": public_config,
+                    }
+                    if "options" in spec:
+                        payload["options"] = spec.get("options")
+                    if "isPublic" in spec:
+                        payload["isPublic"] = bool(spec.get("isPublic"))
+                    update_code, updated, _ = _apify(f"/actor-tasks/{task_id}", method="PUT", body=payload)
+                    task = (updated.get("data") or {}) if isinstance(updated, dict) else {}
+                    results.append({"name": name, "ok": update_code in {200,201}, "httpStatus": update_code, "created": False, "id": task.get("id") or task_id, "isPublic": task.get("isPublic")})
+                else:
+                    create_payload = {
+                        "actId": target_actor_id,
+                        "name": name,
+                        "title": title,
+                        "description": description,
+                        "input": actor_input,
+                    }
+                    if "options" in spec:
+                        create_payload["options"] = spec.get("options")
+                    create_code, created, _ = _apify("/actor-tasks", method="POST", body=create_payload)
+                    task = (created.get("data") or {}) if isinstance(created, dict) else {}
+                    task_id = task.get("id")
+                    if create_code not in {200,201} or not task_id:
+                        results.append({"name": name, "ok": False, "httpStatus": create_code})
+                        continue
+                    update_payload = {"publicConfig": public_config}
+                    if "isPublic" in spec:
+                        update_payload["isPublic"] = bool(spec.get("isPublic"))
+                    update_code, updated, _ = _apify(f"/actor-tasks/{task_id}", method="PUT", body=update_payload)
+                    task2 = (updated.get("data") or {}) if isinstance(updated, dict) else {}
+                    results.append({"name": name, "ok": update_code in {200,201}, "httpStatus": update_code, "created": True, "id": task2.get("id") or task_id, "isPublic": task2.get("isPublic")})
+            except Exception as exc:
+                results.append({"name": name, "ok": False, "error": f"{type(exc).__name__}: {str(exc)[:200]}"})
+        return action, {"httpStatus": code, "results": results}
+
     if action == "task-upsert":
         spec = command.get("task")
         if not isinstance(spec, dict):
@@ -375,7 +445,7 @@ def _execute_queue_command(command):
                 summary = {"raw": summary.decode("utf-8", "replace")[:2000]}
         return action, {"httpStatus": code, "summary": summary}
 
-    raise ValueError("unsupported action; allowed: status, actor-update, task-list, task-upsert, build, build-status, run, run-status, run-records, run-log-tail, run-summary, abort")
+    raise ValueError("unsupported action; allowed: status, actor-update, task-list, task-upsert, task-upsert-many, build, build-status, run, run-status, run-records, run-log-tail, run-summary, abort")
 
 
 def _set_state(**kwargs):
