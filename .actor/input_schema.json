@@ -7,8 +7,9 @@
     "catalogFile": {
       "title": "Supplier catalog",
       "type": "string",
-      "description": "Upload a PDF, CSV, XLSX or XLS file, or provide a direct HTTP(S) URL.",
-      "editor": "fileupload"
+      "description": "Upload a PDF, CSV, XLSX or XLS file, or provide a direct HTTP(S) URL. The prefilled file is a tiny synthetic demo so automated checks and first-time runs finish quickly.",
+      "editor": "fileupload",
+      "prefill": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/main/fixtures/store_smoke.csv"
     },
     "filenameOverride": {
       "title": "Filename override (optional)",
@@ -17,6 +18,8 @@
       "editor": "textfield"
     }
   },
-  "required": ["catalogFile"],
+  "required": [
+    "catalogFile"
+  ],
   "additionalProperties": false
 }
