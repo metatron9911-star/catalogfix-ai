@@ -1,6 +1,9 @@
 {
-  "id": "catalogfix-store-icon-20261007-2025",
+  "id": "leadgap-store-categories-20261007-2027",
   "action": "actor-update",
-  "targetActorId": "QJX8h1Odtl2o8RdVq",
-  "pictureUrl": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/main/assets/catalogfix-store-icon.svg"
+  "targetActorId": "M0aiz7xLf5Z0iqOi4",
+  "categories": [
+    "LEAD_GENERATION",
+    "SEO_TOOLS"
+  ]
 }
