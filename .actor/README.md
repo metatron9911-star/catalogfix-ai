@@ -5,6 +5,30 @@ CatalogFix normalizes product fields, flags missing data, invalid prices and dup
 
 Designed to reduce manual catalog QA before import or publication. Upload a supplier PDF, Excel, or CSV file; download structured products and an issue report.
 
+[**Run the tiny demo**](https://apify.com/w_met/catalogfix-ai/examples/clean-product-catalog-data) · [**Try a catalog audit**](https://apify.com/w_met/catalogfix-ai/examples/audit-catalog-before-marketplace-upload)
+
+**From $4.90 per completed catalog up to 50 PDF pages:** get normalized product data, a Ready / Needs Review split and an issue workbook. Larger PDF tiers and non-catalog screening prices are listed below. A completed tiny demo is subject to the same catalog event pricing; Apify credits or plan eligibility determine what you actually pay.
+
+![CatalogFix before and after product workflow](https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/product-readiness-v1/docs/store/catalogfix-hero.png)
+
+## Before / After
+
+| Before: supplier data | After: CatalogFix output |
+| --- | --- |
+| ` cfx-101 `, uneven title spacing | Normalized SKU `CFX-101` and title `Ceramic Mug` |
+| Missing or invalid price | Needs Review; missing price is not invented |
+| Duplicate or conflicting SKU | Issue recorded for manual resolution |
+| Uncertain extracted row | Explicit Ready / Needs Review status and source context |
+| Manual inspection across a file | RESULT.xlsx with Issues Found and separate export views |
+
+These are synthetic demonstration examples. Ready means the row passed current quality gates; inspect relevant issues before import.
+
+### 40-second illustrated walkthrough
+
+![CatalogFix demo, quality view and export walkthrough](https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/product-readiness-v1/docs/store/catalogfix-walkthrough.gif)
+
+This is an illustrated workflow guide, not a screen recording. All demo products are fictional.
+
 ## Quick start
 
 1. Run the prefilled two-product demo, or replace **Supplier catalog** with your PDF, CSV, XLSX or XLS file.
@@ -168,3 +192,12 @@ Use the public Example Tasks in the Store to launch common catalog-cleaning scen
 ## Current release
 
 **Sellable v1**
+
+
+## Try your own small catalog / support
+
+**Send us one small supplier catalog and we'll show you the Ready / Needs Review output.** Start with the Actor's Issues tab to arrange a sample; do not attach a confidential supplier file to a public issue. Only share a catalog you are authorized to share, through an agreed private channel.
+
+For support, include the run ID, input format and expected outcome in the Issues tab. If CatalogFix helped with a real import or catalog QA job, an honest Store review describing that workflow is welcome. No review is required for support or a sample. We do not promise an unverified response-time SLA.
+
+Documentation and public example pages checked: **12 October 2026**. Apify reported reliable prefilled-input execution at this check.
