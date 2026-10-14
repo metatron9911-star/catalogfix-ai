@@ -1,6 +1,6 @@
 {
   "title": "CatalogFix AI input",
-  "description": "Upload one supplier PDF, Excel or CSV catalog. CatalogFix separates confident rows from review-only rows and never invents a missing supplier SKU.",
+  "description": "Upload one supplier PDF, Excel or CSV catalog. Completed catalog runs use one event: $4.90 up to 50 PDF pages (also CSV/Excel), $12.90 for 51–200, $24.90 for 201–500. OCR is included in that event. Technical/statistical non-catalog screening is $1. Demos use the same pricing; credits/discounts may apply. A completed run can be charged even with no detected products. Check Pricing and maximum cost before Start.",
   "type": "object",
   "schemaVersion": 1,
   "properties": {
