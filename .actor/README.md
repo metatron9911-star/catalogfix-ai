@@ -5,23 +5,25 @@ CatalogFix normalizes product fields, flags missing data, invalid prices and dup
 
 Designed to reduce manual catalog QA before import or publication. Upload a supplier PDF, Excel, or CSV file; download structured products and an issue report.
 
+### See the result before you run
+
+**Supplier CSV → normalized products → Ready / Needs Review → Issues Found**
+
+Preview from two successful synthetic demo runs on **14 October 2026**. These are fictional products, not customer results.
+
+| Supplier data | Product output | Status | Issue / next action |
+| --- | --- | --- | --- |
+| ` cfx-201 `, uneven title spacing | `CFX-201` · Linen Cushion Cover · 24.90 | **READY** | Review the normalized record |
+| `CFX-302`, price `-5.00` | Travel Lunch Box · source price retained | **NEEDS REVIEW** | Negative price; confirm the supplier price |
+| Two rows with SKU `CFX-304` | Both conflicting products retained for review | **NEEDS REVIEW** | Duplicate SKU; resolve the conflicting records |
+
+**Download:** RESULT.xlsx with **Issues Found**, separate **Ready / Needs Review** views, and SHOPIFY_READY.csv for rows passing the current gates. Ready is a quality-gate result; review relevant issues before import.
+
 [**Run the 3-product demo**](https://apify.com/w_met/catalogfix-ai/examples/clean-product-catalog-data) · [**Try a catalog audit**](https://apify.com/w_met/catalogfix-ai/examples/audit-catalog-before-marketplace-upload)
 
 **From $4.90 per completed catalog up to 50 PDF pages:** get normalized product data, a Ready / Needs Review split and an issue workbook. Larger PDF tiers and non-catalog screening prices are listed below. A completed tiny demo is subject to the same catalog event pricing; Apify credits or plan eligibility determine what you actually pay.
 
 ![CatalogFix before and after product workflow](https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/product-readiness-v1/docs/store/catalogfix-hero.png)
-
-## Before / After
-
-| Before: supplier data | After: CatalogFix output |
-| --- | --- |
-| ` cfx-101 `, uneven title spacing | Normalized SKU `CFX-101` and title `Ceramic Mug` |
-| Missing or invalid price | Needs Review; missing price is not invented |
-| Duplicate or conflicting SKU | Issue recorded for manual resolution |
-| Uncertain extracted row | Explicit Ready / Needs Review status and source context |
-| Manual inspection across a file | RESULT.xlsx with Issues Found and separate export views |
-
-These are synthetic demonstration examples. Ready means the row passed current quality gates; inspect relevant issues before import.
 
 ### 40-second illustrated walkthrough
 
@@ -35,6 +37,18 @@ This is an illustrated workflow guide, not a screen recording. All demo products
 2. Open **Catalog quality at a glance** to review product status and normalized values.
 3. Download **RESULT.xlsx** and check **Issues Found** for issue type, severity, affected field and current value.
 4. Review flagged rows before import. **SHOPIFY_READY.csv** contains rows passing the current quality gates; it is not a guarantee of acceptance by every marketplace.
+
+## Before / After
+
+| Before: supplier data | After: CatalogFix output |
+| --- | --- |
+| ` cfx-101 `, uneven title spacing | Normalized SKU `CFX-101` and title `Ceramic Mug` |
+| Missing or invalid price | Needs Review; missing price is not invented |
+| Duplicate or conflicting SKU | Issue recorded for manual resolution |
+| Uncertain extracted row | Explicit Ready / Needs Review status and source context |
+| Manual inspection across a file | RESULT.xlsx with Issues Found and separate export views |
+
+These are synthetic demonstration examples. Ready means the row passed current quality gates; inspect relevant issues before import.
 
 ### Example results
 
