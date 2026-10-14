@@ -5,7 +5,7 @@ CatalogFix normalizes product fields, flags missing data, invalid prices and dup
 
 Designed to reduce manual catalog QA before import or publication. Upload a supplier PDF, Excel, or CSV file; download structured products and an issue report.
 
-[**Run the tiny demo**](https://apify.com/w_met/catalogfix-ai/examples/clean-product-catalog-data) · [**Try a catalog audit**](https://apify.com/w_met/catalogfix-ai/examples/audit-catalog-before-marketplace-upload)
+[**Run the 3-product demo**](https://apify.com/w_met/catalogfix-ai/examples/clean-product-catalog-data) · [**Try a catalog audit**](https://apify.com/w_met/catalogfix-ai/examples/audit-catalog-before-marketplace-upload)
 
 **From $4.90 per completed catalog up to 50 PDF pages:** get normalized product data, a Ready / Needs Review split and an issue workbook. Larger PDF tiers and non-catalog screening prices are listed below. A completed tiny demo is subject to the same catalog event pricing; Apify credits or plan eligibility determine what you actually pay.
 
@@ -31,7 +31,7 @@ This is an illustrated workflow guide, not a screen recording. All demo products
 
 ## Quick start
 
-1. Run the prefilled two-product demo, or replace **Supplier catalog** with your PDF, CSV, XLSX or XLS file.
+1. Run the linked three-product example (one row has a missing price), or use the Actor's prefilled two-product smoke test. Replace **Supplier catalog** with your PDF, CSV, XLSX or XLS file.
 2. Open **Catalog quality at a glance** to review product status and normalized values.
 3. Download **RESULT.xlsx** and check **Issues Found** for issue type, severity, affected field and current value.
 4. Review flagged rows before import. **SHOPIFY_READY.csv** contains rows passing the current quality gates; it is not a guarantee of acceptance by every marketplace.
@@ -168,6 +168,8 @@ CatalogFix uses **pay per event** with one charge per completed run:
 - **201–500 pages:** $24.90
 - **Technical/statistical non-catalog screening:** $1.00
 
+The catalog event includes OCR/parsing, QA and the listed output files; there is no separate OCR event. CSV and Excel files use the $4.90 small-catalog event. A completed demo uses the same event pricing. A completed run with no detected products can still incur the catalog event; only files classified as technical/statistical non-catalog documents use the $1 screening event. Inspect the source and select an appropriate maximum cost before starting. Apify credits and applicable discounts determine the amount charged to your account.
+
 The current self-service Store version accepts PDFs up to **500 pages**. Larger catalogs should be split or handled as a managed/custom run.
 
 ## API, automations, and AI agents
@@ -200,4 +202,4 @@ Use the public Example Tasks in the Store to launch common catalog-cleaning scen
 
 For support, include the run ID, input format and expected outcome in the Issues tab. If CatalogFix helped with a real import or catalog QA job, an honest Store review describing that workflow is welcome. No review is required for support or a sample. We do not promise an unverified response-time SLA.
 
-Documentation and public example pages checked: **12 October 2026**. Apify reported reliable prefilled-input execution at this check.
+Documentation and public example pages checked: **14 October 2026**. Apify reported reliable prefilled-input execution at this check.
