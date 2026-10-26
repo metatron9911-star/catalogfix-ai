@@ -3,7 +3,7 @@
   "name": "catalogfix-ai",
   "title": "CatalogFix AI — Product Catalog Cleaning & Data Quality Audit",
   "version": "1.9",
-  "buildTag": "latest",
+  "buildTag": "catalog-text-acceptance",
   "dockerfile": "./Dockerfile",
   "readme": "./README.md",
   "input": "./input_schema.json",
