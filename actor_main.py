@@ -2,6 +2,8 @@ import asyncio
 import io
 import json
 import mimetypes
+import os
+os.environ['CATALOGFIX_TEXT_ONLY_RUNTIME']='true'
 import re
 import tempfile
 import urllib.parse
@@ -141,7 +143,7 @@ def _import_catalog(data: bytes, filename: str):
                 checkpoint_dir=checkpoint_dir,
                 resume=False,
                 return_meta=True,
-                visual_ocr=True,
+                visual_ocr=False,
             )
         mapping = {field: field for field in CANONICAL_FIELDS if field in imported.columns}
         import_mode = "Universal PDF Router"
@@ -177,6 +179,9 @@ def _records(df: pd.DataFrame) -> list[dict]:
 async def main() -> None:
     async with Actor:
         actor_input = await Actor.get_input() or {}
+        if actor_input.get("automaticTextOnly", True) is not True:
+            raise ValueError("This build only supports automatic text-only processing.")
+        Actor.log.info("AUTOMATIC_TEXT_ONLY_ENFORCED visual_ocr=false ocr_engine=blocked")
         source = actor_input.get("catalogFile", "")
         filename_hint = actor_input.get("filenameOverride", "")
 

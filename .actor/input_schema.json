@@ -1,13 +1,13 @@
 {
   "title": "CatalogFix AI input",
-  "description": "Upload one supplier PDF, Excel or CSV catalog. Completed catalog runs use one event: $4.90 up to 50 PDF pages (also CSV/Excel), $12.90 for 51–200, $24.90 for 201–500. OCR is included in that event. Technical/statistical non-catalog screening is $1. Demos use the same pricing; credits/discounts may apply. A completed run can be charged even with no detected products. Check Pricing and maximum cost before Start.",
+  "description": "Text-only automatic supplier processing: machine-readable PDF, CSV and XLSX. Scanned/image-only or ambiguous PDFs require manual review before gateway acceptance. No automatic OCR. Rows are classified Ready / Needs Review; missing facts are not invented.",
   "type": "object",
   "schemaVersion": 1,
   "properties": {
     "catalogFile": {
       "title": "Supplier catalog",
       "type": "string",
-      "description": "Upload a PDF, CSV, XLSX or XLS, or provide a direct HTTP(S) URL. The prefilled file contains two synthetic demo products. Replace it with your own catalog.",
+      "description": "One machine-readable PDF, CSV or XLSX. Legacy XLS unsupported by gateway. Use an approved direct HTTPS source.",
       "editor": "fileupload",
       "prefill": "https://raw.githubusercontent.com/metatron9911-star/catalogfix-ai/f1a75576bb6883f76415bfb4fe7bc051545024f6/fixtures/store_smoke.csv"
     },
@@ -16,10 +16,20 @@
       "type": "string",
       "description": "Use only when the uploaded URL does not preserve a file extension. Example: supplier_catalog.pdf",
       "editor": "textfield"
+    },
+    "automaticTextOnly": {
+      "title": "Automatic text-only mode",
+      "type": "boolean",
+      "enum": [
+        true
+      ],
+      "default": true,
+      "description": "Fixed to true. This dedicated build cannot enable visual OCR."
     }
   },
   "required": [
-    "catalogFile"
+    "catalogFile",
+    "automaticTextOnly"
   ],
   "additionalProperties": false
 }

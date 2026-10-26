@@ -1511,6 +1511,9 @@ def _visual_code_candidate_classification_v1(raw_text, code):
     return "ACCEPT"
 
 def _get_ocr_engine():
+    if os.environ.get('CATALOGFIX_TEXT_ONLY_RUNTIME') == 'true':
+        raise RuntimeError('OCR_DISABLED_IN_TEXT_ONLY_BUILD')
+
     """Return ('rapidocr3', engine), legacy RapidOCR, Tesseract, or (None, None).
 
     RapidOCR's maintained package is now ``rapidocr``.  The older
